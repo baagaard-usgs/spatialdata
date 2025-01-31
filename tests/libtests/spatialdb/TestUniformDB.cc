@@ -23,8 +23,7 @@
 namespace spatialdata {
     namespace spatialdb {
         class TestUniformDB;
-        class UniformDB; // USES UniformDB
-    } // spatialdb
+    }
 } // spatialdata
 
 class spatialdata::spatialdb::TestUniformDB {
@@ -49,7 +48,7 @@ public:
 
     /// Test setQueryValues()
     static
-    void testQueryVals(void);
+    void testQueryValues(void);
 
     /// Test query()
     static
@@ -70,8 +69,8 @@ TEST_CASE("TestUniformDB::testSetData", "[TestUniformDB]") {
 TEST_CASE("TestUniformDB::testGetNamesDBValues", "[TestUniformDB]") {
     spatialdata::spatialdb::TestUniformDB::testGetNamesDBValues();
 }
-TEST_CASE("TestUniformDB::testQueryVals", "[TestUniformDB]") {
-    spatialdata::spatialdb::TestUniformDB::testQueryVals();
+TEST_CASE("TestUniformDB::testQueryValues", "[TestUniformDB]") {
+    spatialdata::spatialdb::TestUniformDB::testQueryValues();
 }
 TEST_CASE("TestUniformDB::testQuery", "[TestUniformDB]") {
     spatialdata::spatialdb::TestUniformDB::testQuery();
@@ -81,11 +80,10 @@ TEST_CASE("TestUniformDB::testQuery", "[TestUniformDB]") {
 // Test constructor.
 void
 spatialdata::spatialdb::TestUniformDB::testConstructors(void) {
-    UniformDB db;
+    const std::string& description = "TestUniformDB::testConstructors";
+    UniformDB db(description.c_str());
 
-    const std::string description("database A");
-    UniformDB dbL(description.c_str());
-    CHECK(description == std::string(dbL.getDescription()));
+    CHECK(description == std::string(db.getDescription()));
 } // testConstructors
 
 
@@ -93,10 +91,9 @@ spatialdata::spatialdb::TestUniformDB::testConstructors(void) {
 // Test accessors().
 void
 spatialdata::spatialdb::TestUniformDB::testAccessors(void) {
-    const std::string description("database 2");
+    const std::string& description = "TestUniformDB::testAccessors";
 
-    UniformDB db;
-    db.setDescription(description.c_str());
+    UniformDB db(description.c_str());
     CHECK(description == std::string(db.getDescription()));
 } // testAccessors
 
@@ -105,28 +102,29 @@ spatialdata::spatialdb::TestUniformDB::testAccessors(void) {
 // Test setData().
 void
 spatialdata::spatialdb::TestUniformDB::testSetData(void) {
-    UniformDB db;
+    UniformDB db("TestUniformDB::testSetData");
 
     const size_t numValues = 3;
-    const char* names[numValues] = { "one", "two", "three" };
-    const char* units[numValues] = { "m", "km", "cm" };
-    const double values[numValues] = { 1.1, 2.2, 3.3 };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "m", "km", "cm" });
+    const std::vector<double> values({ 1.1, 2.2, 3.3 });
     const double valuesE[numValues] = { 1.1, 2.2e+3, 3.3e-2 };
 
-    db.setData(names, units, values, numValues);
+    db.setData(names, units, values);
 
-    REQUIRE(numValues == db._numValues);
+    REQUIRE(numValues == db._names.size());
     for (size_t i = 0; i < numValues; ++i) {
         CHECK(std::string(names[i]) == db._names[i]);
     } // for
 
+    REQUIRE(numValues == db._values.size());
     for (size_t i = 0; i < numValues; ++i) {
         CHECK(valuesE[i] == db._values[i]);
     } // for
 
-    REQUIRE(numValues == db._querySize);
+    REQUIRE(numValues == db._queryIndices.size());
     for (size_t i = 0; i < numValues; ++i) {
-        CHECK(i == db._queryValues[i]);
+        CHECK(i == db._queryIndices[i]);
     } // for
 } // testSetData
 
@@ -136,68 +134,61 @@ spatialdata::spatialdb::TestUniformDB::testSetData(void) {
 void
 spatialdata::spatialdb::TestUniformDB::testGetNamesDBValues(void) {
     const size_t numValuesE = 3;
-    const char* names[numValuesE] = { "one", "two", "three" };
-    const char* units[numValuesE] = { "none", "none", "none" };
-    const double values[numValuesE] = { 1.1, 2.2, 3.3 };
+    const std::vector<std::string> namesE({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "none", "none" });
+    const std::vector<double> values({ 1.1, 2.2, 3.3 });
 
-    UniformDB db;
-    db.setData(names, units, values, numValuesE);
+    UniformDB db("TestUniformDB::testGetNamesDBValues");
+    db.setData(namesE, units, values);
 
-    const char** valueNames = NULL;
-    size_t numValues = 0;
-    db.getNamesDBValues(&valueNames, &numValues);
-    REQUIRE(numValuesE == numValues);
-
+    const std::vector<std::string>& names = db.getNamesDBValues();
+    REQUIRE(numValuesE == names.size());
     for (size_t i = 0; i < numValuesE; ++i) {
-        CHECK(std::string(names[i]) == std::string(valueNames[i]));
+        CHECK(std::string(namesE[i]) == std::string(names[i]));
     } // for
-    delete[] valueNames;valueNames = NULL;
-    numValues = 0;
 } // testGetDBValues
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues().
 void
-spatialdata::spatialdb::TestUniformDB::testQueryVals(void) {
-    UniformDB db;
+spatialdata::spatialdb::TestUniformDB::testQueryValues(void) {
+    UniformDB db("TestUniformDB::testQueryValues");
 
-    const size_t numValues = 3;
-    const char* names[numValues] = { "one", "two", "three" };
-    const char* units[numValues] = { "none", "none", "none" };
-    const double values[numValues] = { 1.1, 2.2, 3.3 };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "none", "none" });
+    const std::vector<double> values({ 1.1, 2.2, 3.3 });
 
+    const std::vector<std::string> queryNames({ "three", "two" });
     const size_t querySize = 2;
-    const char* queryNames[querySize] = { "three", "two" };
     const size_t queryVals[querySize] = { 2, 1 };
 
-    db.setData(names, units, values, numValues);
-    db.setQueryValues(queryNames, querySize);
+    db.setData(names, units, values);
+    db.setQueryValues(queryNames);
 
-    REQUIRE(querySize == db._querySize);
+    REQUIRE(querySize == db._queryIndices.size());
     for (size_t i = 0; i < querySize; ++i) {
-        CHECK(queryVals[i] == db._queryValues[i]);
+        CHECK(queryVals[i] == db._queryIndices[i]);
     } // for
-} // testQueryVals
+} // testQueryValues
 
 
 // ----------------------------------------------------------------------
 // Test query().
 void
 spatialdata::spatialdb::TestUniformDB::testQuery(void) {
-    UniformDB db;
+    UniformDB db("TestUniformDB::testQuery");
 
-    const size_t numValues = 3;
-    const char* names[numValues] = { "one", "two", "three" };
-    const char* units[numValues] = { "none", "none", "none" };
-    const double values[numValues] = { 1.1, 2.2, 3.3 };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "none", "none" });
+    const std::vector<double> values({ 1.1, 2.2, 3.3 });
 
+    const std::vector<std::string> queryNames({ "three", "two" });
     const size_t querySize = 2;
-    const char* queryNames[querySize] = { "three", "two" };
     const size_t queryVals[querySize] = { 2, 1 };
 
-    db.setData(names, units, values, numValues);
-    db.setQueryValues(queryNames, querySize);
+    db.setData(names, units, values);
+    db.setQueryValues(queryNames);
 
     const size_t spaceDim = 2;
     spatialdata::geocoords::CSCart cs;
@@ -205,7 +196,7 @@ spatialdata::spatialdb::TestUniformDB::testQuery(void) {
     const double coords[spaceDim] = { 2.3, 5.6 };
     double data[querySize];
 
-    db.query(data, querySize, coords, spaceDim, &cs);
+    db.query(data, querySize, coords, &cs);
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {

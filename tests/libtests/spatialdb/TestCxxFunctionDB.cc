@@ -10,9 +10,9 @@
 
 #include <portinfo>
 
-#include "TestUserFunctionDB.hh" // Implementation of class methods
+#include "TestCxxFunctionDB.hh" // Implementation of class methods
 
-#include "spatialdata/spatialdb/UserFunctionDB.hh" // USES UserFunctionDB
+#include "spatialdata/spatialdb/CxxFunctionDB.hh" // USES CxxFunctionDB
 #include "spatialdata/geocoords/CSCart.hh" // USE CSCart
 
 #include "catch2/catch_test_macros.hpp"
@@ -21,43 +21,52 @@
 #include <cmath> // USES fabs()
 #include <stdexcept> // USES std::runtime_error
 
+namespace spatialdata {
+    namespace spatialdb {
+        namespace _TestCxxFunctionDB {
+            double
+            fn1D(double x) {
+                return x * x;
+            }
+
+
+        }
+    }
+}
+
 // ----------------------------------------------------------------------
 // Constructor
-spatialdata::spatialdb::TestUserFunctionDB::TestUserFunctionDB(TestUserFunctionDB_Data* data,
-                                                               UserFunctionDB* db) :
+spatialdata::spatialdb::TestCxxFunctionDB::TestCxxFunctionDB(TestCxxFunctionDB_Data* data,
+                                                             CxxFunctionDB* db) :
     _db(db),
     _data(data) {
     assert(_data);
     assert(_db);
 
-    _db->setCoordSys(*_data->cs);
+    _db->setCoordSys(_data->cs);
 } // setUp
 
 
 // ----------------------------------------------------------------------
 // Tear down testing data.
-spatialdata::spatialdb::TestUserFunctionDB::~TestUserFunctionDB(void) {
-    delete _db;_db = NULL;
-    delete _data;_data = NULL;
-} // tearDown
+spatialdata::spatialdb::TestCxxFunctionDB::~TestCxxFunctionDB(void) {}
 
 
 // ----------------------------------------------------------------------
 // Test constructor
 void
-spatialdata::spatialdb::TestUserFunctionDB::testConstructor(void) {
-    UserFunctionDB db;
+spatialdata::spatialdb::TestCxxFunctionDB::testConstructor(void) {
+    CxxFunctionDB db("TestCxxFunctionDB::testConstructor");
 } // testConstructor
 
 
 // ----------------------------------------------------------------------
 // Test label()
 void
-spatialdata::spatialdb::TestUserFunctionDB::testDescription(void) {
-    UserFunctionDB db;
+spatialdata::spatialdb::TestCxxFunctionDB::testDescription(void) {
+    const std::string& description = "TestCxxFunctionDB::testDescription";
+    CxxFunctionDB db(description.c_str());
 
-    const std::string& description = "database 2";
-    db.setDescription(description.c_str());
     CHECK(description == std::string(db.getDescription()));
 } // testDescription
 
@@ -65,50 +74,57 @@ spatialdata::spatialdb::TestUserFunctionDB::testDescription(void) {
 // ----------------------------------------------------------------------
 // Test coordsys()
 void
-spatialdata::spatialdb::TestUserFunctionDB::testCoordsys(void) {
-    UserFunctionDB db;
+spatialdata::spatialdb::TestCxxFunctionDB::testCoordsys(void) {
+    CxxFunctionDB db("TestCxxFunctionDB::testCoordsys");
 
-    spatialdata::geocoords::CSCart cs;
-    cs.setSpaceDim(2);
+    std::shared_ptr<spatialdata::geocoords::CSCart> cs(new spatialdata::geocoords::CSCart);
+    const size_t spaceDim = 2;
+    cs->setSpaceDim(spaceDim);
     db.setCoordSys(cs);
-    CHECK(cs.getSpaceDim() == db._cs->getSpaceDim());
+    CHECK(spaceDim == db._cs->getSpaceDim());
 } // testCoordsys
 
 
 // ----------------------------------------------------------------------
 // Test addValue()
 void
-spatialdata::spatialdb::TestUserFunctionDB::testAddValue(void) {
-    const int numValues = _data->numValues;
-    for (int i = 0; i < numValues; ++i) {
-        const std::string& name = _data->values[i].name;
-        assert(_db->_functions[name].fn);
-        CHECK(_data->values[i].units == _db->_functions[name].units);
+spatialdata::spatialdb::TestCxxFunctionDB::testAddValue(void) {
+    const size_t numValues = _data->numValues;
+    assert(numValues == _db->_functions.size());
+    for (size_t i = 0; i < numValues; ++i) {
+        assert(_db->_functions[i].fn);
+        CHECK(_data->values[i].units == _db->_functions[i].units);
     } // for
+
+    // Test duplicate add
+    CxxFunctionDB db("TestCxxFunctionDB::testAddValue");
+    db.addValue("one", _TestCxxFunctionDB::fn1D, "m");
+    REQUIRE_THROWS_AS(db.addValue("two", _TestCxxFunctionDB::fn1D, nullptr), std::logic_error);
+    REQUIRE_THROWS_AS(db.addValue("one", _TestCxxFunctionDB::fn1D, "m"), std::logic_error);
 } // testAddValue
 
 
 // ----------------------------------------------------------------------
 // Test open() and close()
 void
-spatialdata::spatialdb::TestUserFunctionDB::testOpenClose(void) {
+spatialdata::spatialdb::TestCxxFunctionDB::testOpenClose(void) {
     assert(_data);
     assert(_db);
 
     // Test open() and close() with valid data.
     _db->open();
+
     // Verify scales
     const size_t numValues = _data->numValues;
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < numValues; ++i) {
-        const std::string& name = _data->values[i].name;
-        CHECK_THAT(_db->_functions[name].scale, Catch::Matchers::WithinAbs(_data->values[i].scale, tolerance));
+        CHECK_THAT(_db->_functions[i].scale, Catch::Matchers::WithinAbs(_data->values[i].scale, tolerance));
     } // for
 
-    REQUIRE(numValues == _db->_querySize);
+    REQUIRE(numValues == _db->_queryIndices.size());
 
     _db->close();
-    assert(!_db->_queryFunctions);
+    assert(0 == _db->_queryIndices.size());
 
     // Verify open() fails with spatial dimension mismatch.
     const int spaceDim = _data->cs->getSpaceDim();
@@ -118,82 +134,77 @@ spatialdata::spatialdb::TestUserFunctionDB::testOpenClose(void) {
     _db->_cs->setSpaceDim(spaceDim); // Reset space dimension.
 
     // Verify open() fails with bad units.
-    _db->_functions[_data->values[0].name].units = "abcd";
+    _db->_functions[0].units = "abcd";
     CHECK_THROWS_AS(_db->open(), std::runtime_error);
-
 } // testOpenClose
 
 
 // ----------------------------------------------------------------------
 // Test getNamesDBValues().
 void
-spatialdata::spatialdb::TestUserFunctionDB::testGetNamesDBValues(void) {
+spatialdata::spatialdb::TestCxxFunctionDB::testGetNamesDBValues(void) {
     assert(_data);
     assert(_db);
 
-    const char** valueNames = NULL;
-    size_t numValues = 0;
-    _db->getNamesDBValues(&valueNames, &numValues);
-    REQUIRE(_data->numValues == numValues);
+    const std::vector<std::string>& names = _db->getNamesDBValues();
+    const size_t numNames = names.size();
+    REQUIRE(_data->numValues == numNames);
 
-    for (size_t i = 0; i < numValues; ++i) {
+    for (size_t i = 0; i < numNames; ++i) {
         bool found = false;
-        for (size_t iE = 0; iE < numValues; ++iE) {
-            if (_data->values[iE].name == std::string(valueNames[i])) {
+        for (size_t iE = 0; iE < numNames; ++iE) {
+            if (_data->values[iE].name == std::string(names[i])) {
                 found = true;
                 break;
             } // if
         } // for
         if (!found) {
-            FAIL("Could not find value '" << valueNames[i] << "' in UserFunctionDB test data.");
+            FAIL("Could not find value '" << names[i] << "' in CxxFunctionDB test data.");
         } // if
     } // for
-    delete[] valueNames;valueNames = NULL;
-    numValues = 0;
 } // testGetDBValues
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues().
 void
-spatialdata::spatialdb::TestUserFunctionDB::testQueryVals(void) {
+spatialdata::spatialdb::TestCxxFunctionDB::testQueryValues(void) {
     assert(_data);
     assert(_db);
 
     _db->open();
 
     // Call setQueryValues().
-    const int numValues = _data->numValues - 1;
-    const char** names = (numValues > 0) ? new const char*[numValues] : NULL;
-    for (int i = 0; i < numValues; ++i) {
-        names[i] = _data->values[numValues-1-i].name.c_str();
+    const size_t querySize = _data->numValues - 1;
+    std::vector<std::string> names(querySize);
+    for (int i = 0; i < querySize; ++i) {
+        names[i] = _data->values[querySize-1-i].name;
     } // for
-    _db->setQueryValues(names, numValues);
-    delete[] names;names = NULL;
+    _db->setQueryValues(names);
 
     // Check result.
-    for (int i = 0; i < numValues; ++i) {
-        const int j = numValues - 1 - i;
-        assert(_db->_queryFunctions[j]->fn);
-        CHECK(_data->values[j].units == _db->_queryFunctions[i]->units);
-        CHECK(_data->values[j].scale == _db->_queryFunctions[i]->scale);
+    CHECK(querySize == _db->_queryIndices.size());
+    for (int i = 0; i < querySize; ++i) {
+        const int j = querySize - 1 - i;
+        CHECK(j == _db->_queryIndices[i]);
     } // for
 
     // Attempt to create query with no values.
-    CHECK_THROWS_AS(_db->setQueryValues(NULL, 0), std::invalid_argument);
+    std::vector<std::string> empty;
+    CHECK_THROWS_AS(_db->setQueryValues(empty), std::invalid_argument);
 
     // Attempt to create query with value not in database (verify failure).
-    const char* badname = "lkdfjglkdfjgljsdf";
-    CHECK_THROWS_AS(_db->setQueryValues(&badname, 1), std::out_of_range);
+    std::vector<std::string> badname({"lkdfjglkdfjgljsdf"});
+    CHECK_THROWS_AS(_db->setQueryValues(badname), std::out_of_range);
 
     _db->close();
-} // testQueryVals
+} // testQueryValues
 
 
 // ----------------------------------------------------------------------
 // Test query()
 void
-spatialdata::spatialdb::TestUserFunctionDB::testQuery(void) {
+spatialdata::spatialdb::TestCxxFunctionDB::testQuery(void) {
     assert(_data);
 
     assert(_data->cs);
@@ -205,17 +216,17 @@ spatialdata::spatialdb::TestUserFunctionDB::testQuery(void) {
     _db->open();
 
     // Call setQueryValues().
-    const char** names = (numValues > 0) ? new const char*[numValues] : NULL;
-    for (size_t i = 0; i < numValues; ++i) {
-        names[i] = _data->values[i].name.c_str();
+    const size_t querySize = numValues;
+    std::vector<std::string> names(querySize);
+    for (int i = 0; i < querySize; ++i) {
+        names[i] = _data->values[i].name;
     } // for
-    _db->setQueryValues(names, numValues);
-    delete[] names;names = NULL;
+    _db->setQueryValues(names);
 
     // Call query() and check result.
     const double tolerance = 1.0e-6;
     for (size_t iQuery = 0; iQuery < numQueries; ++iQuery) {
-        const int flag = _db->query(values, numValues, &_data->queryXYZ[iQuery*spaceDim], spaceDim, _data->cs);
+        const int flag = _db->query(values, numValues, &_data->queryXYZ[iQuery*spaceDim], _data->cs.get());
         CHECK(0 == flag);
 
         for (size_t iVal = 0; iVal < numValues; ++iVal) {
@@ -232,20 +243,17 @@ spatialdata::spatialdb::TestUserFunctionDB::testQuery(void) {
 
 // ----------------------------------------------------------------------
 // Constructor
-spatialdata::spatialdb::TestUserFunctionDB_Data::TestUserFunctionDB_Data(void) :
+spatialdata::spatialdb::TestCxxFunctionDB_Data::TestCxxFunctionDB_Data(void) :
     numValues(0),
-    values(NULL),
-    cs(NULL),
-    queryXYZ(NULL),
-    queryValues(NULL),
+    values(nullptr),
+    queryXYZ(nullptr),
+    queryValues(nullptr),
     numQueryPoints(0) {}
 
 
 // ----------------------------------------------------------------------
 // Destructor
-spatialdata::spatialdb::TestUserFunctionDB_Data::~TestUserFunctionDB_Data(void) {
-    delete cs;cs = NULL;
-}
+spatialdata::spatialdb::TestCxxFunctionDB_Data::~TestCxxFunctionDB_Data(void) {}
 
 
 // End of file

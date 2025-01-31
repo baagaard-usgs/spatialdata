@@ -22,7 +22,6 @@
 namespace spatialdata {
     namespace spatialdb {
         class TestTimeHistory;
-        class TimeHistory; // USES TimeHistory
     } // spatialdb
 } // spatialdata
 
@@ -59,11 +58,10 @@ TEST_CASE("TestTimeHistory::testQuery", "[TestTimeHistory]") {
 // Test accessors.
 void
 spatialdata::spatialdb::TestTimeHistory::testAccessors(void) {
-    const std::string description("time history A");
-    const std::string filename("file.th");
+    const std::string& description = "TestTimeHistory::testAccessors";
+    const std::string& filename = "file.th";
 
-    TimeHistory th;
-    th.setDescription(description.c_str());
+    TimeHistory th(description.c_str());
     CHECK(description == std::string(th.getDescription()));
 
     th.setFilename(filename.c_str());
@@ -75,18 +73,18 @@ spatialdata::spatialdb::TestTimeHistory::testAccessors(void) {
 // Test open() and close()
 void
 spatialdata::spatialdb::TestTimeHistory::testOpenClose(void) {
-    const size_t npts = 6;
-    const double time[npts] = { 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 };
-    const double amplitude[npts] = { 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 };
+    const size_t numPoints = 6;
+    const std::vector<double> time({ 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 });
+    const std::vector<double> amplitude({ 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 });
     const char* timeUnits = "minute";
 
     const char* filename = "data/timehistory.data";
-    TimeHistoryIO::write(time, npts, amplitude, npts, timeUnits, filename);
+    TimeHistoryIO::write(time, amplitude, timeUnits, filename);
 
-    TimeHistory th;
+    TimeHistory th("TestTimeHistory::testOpenClose");
     th.setFilename(filename);
 
-    th.close(); // Test calling close on upopened db
+    th.close(); // Test calling close on unopened db
 
     th.open();
 
@@ -95,19 +93,17 @@ spatialdata::spatialdb::TestTimeHistory::testOpenClose(void) {
     CHECK(scale > 0.0);
 
     CHECK(size_t(0) == th._ilower);
-    REQUIRE(npts == th._npts);
-    REQUIRE(th._time);
-    REQUIRE(th._amplitude);
+    REQUIRE(numPoints == th._time.size());
+    REQUIRE(numPoints == th._amplitude.size());
     const double tolerance = 1.0e-06;
-    for (size_t i = 0; i < npts; ++i) {
+    for (size_t i = 0; i < numPoints; ++i) {
         CHECK_THAT(th._time[i]/scale, Catch::Matchers::WithinAbs(time[i], tolerance));
         CHECK_THAT(th._amplitude[i], Catch::Matchers::WithinAbs(amplitude[i], tolerance));
     } // for
 
     th.close();
-    CHECK(size_t(0) == th._npts);
-    CHECK(!th._time);
-    CHECK(!th._amplitude);
+    CHECK(size_t(0) == th._time.size());
+    CHECK(size_t(0) == th._amplitude.size());
 
     th.close(); // Test calling close when already closed
 } // testOpenClose
@@ -129,7 +125,7 @@ spatialdata::spatialdb::TestTimeHistory::testQuery(void) {
         0, 0, 0, 0, 0, 1, 0
     };
 
-    TimeHistory th;
+    TimeHistory th("TestTimeHistory::testQuery");
     th.setFilename(filename);
 
     th.open();

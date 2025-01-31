@@ -10,9 +10,9 @@
 
 #include <portinfo>
 
-#include "spatialdata/spatialdb/SimpleGridAscii.hh" // Test subject
+#include "spatialdata/spatialdb/SimpleGridDBIO.hh" // Test subject
 
-#include "spatialdata/spatialdb/SimpleGridDB.hh" // USES SimpleGridDB
+#include "spatialdata/spatialdb/SimpleGridDBData.hh" // USES SimpleGridDBData
 
 #include "spatialdata/geocoords/CSCart.hh" // USE CSCart
 #include "spatialdata/geocoords/CSGeo.hh" // USE CSGeo
@@ -25,11 +25,11 @@
 // ------------------------------------------------------------------------------------------------
 namespace spatialdata {
     namespace spatialdb {
-        class TestSimpleGridAscii;
+        class TestSimpleGridDBIO;
     } // spatialdb
 } // spatialdata
 
-class spatialdata::spatialdb::TestSimpleGridAscii {
+class spatialdata::spatialdb::TestSimpleGridDBIO {
     // PUBLIC METHODS /////////////////////////////////////////////////////////////////////////////
 public:
 
@@ -45,23 +45,23 @@ public:
     static
     void testReadComments(void);
 
-}; // class TestSimpleGridAscii
+}; // class TestSimpleGridDBIO
 
 // ------------------------------------------------------------------------------------------------
-TEST_CASE("TestSimpleGridAscii::testIOCSCart", "[TestSimpleGridAscii]") {
-    spatialdata::spatialdb::TestSimpleGridAscii::testIOCSCart();
+TEST_CASE("TestSimpleGridDBIO::testIOCSCart", "[TestSimpleGridDBIO]") {
+    spatialdata::spatialdb::TestSimpleGridDBIO::testIOCSCart();
 }
-TEST_CASE("TestSimpleGridAscii::testIOCSGeo", "[TestSimpleGridAscii]") {
-    spatialdata::spatialdb::TestSimpleGridAscii::testIOCSGeo();
+TEST_CASE("TestSimpleGridDBIO::testIOCSGeo", "[TestSimpleGridDBIO]") {
+    spatialdata::spatialdb::TestSimpleGridDBIO::testIOCSGeo();
 }
-TEST_CASE("TestSimpleGridAscii::testReadComments", "[TestSimpleGridAscii]") {
-    spatialdata::spatialdb::TestSimpleGridAscii::testReadComments();
+TEST_CASE("TestSimpleGridDBIO::testReadComments", "[TestSimpleGridDBIO]") {
+    spatialdata::spatialdb::TestSimpleGridDBIO::testReadComments();
 }
 
 // ----------------------------------------------------------------------
 // Test filename(), write(), read().
 void
-spatialdata::spatialdb::TestSimpleGridAscii::testIOCSCart(void) {
+spatialdata::spatialdb::TestSimpleGridDBIO::testIOCSCart(void) {
     const size_t numX = 1;
     const size_t numY = 2;
     const size_t numZ = 3;
@@ -73,14 +73,6 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSCart(void) {
     const double y[numY] = { 0.0, 1.0 };
     const double z[numZ] = { -2.0, -1.0, 2.0 };
 
-    const double coords[numX*numY*numZ*spaceDim] = {
-        -2.0,  0.0, -2.0,
-        -2.0,  1.0, -2.0,
-        -2.0,  0.0, -1.0,
-        -2.0,  1.0, -1.0,
-        -2.0,  0.0,  2.0,
-        -2.0,  1.0,  2.0,
-    };
     const double data[numX*numY*numZ*numValues] = {
         6.6,  3.4,
         5.5,  6.7,
@@ -89,57 +81,80 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSCart(void) {
         6.3,  6.9,
         3.4,  6.4,
     };
-    const char* names[numValues] = { "One", "Two" };
-    const char* units[numValues] = { "m", "m" };
+    const std::vector<std::string> names({ "One", "Two" });
+    const std::vector<std::string> units({ "m", "m" });
+    std::shared_ptr<spatialdata::geocoords::CoordSys> csOut(new spatialdata::geocoords::CSCart());assert(csOut);
+    csOut->setSpaceDim(spaceDim);
 
-    geocoords::CSCart csOut;
-    SimpleGridDB dbOut;
-    dbOut.setCoordSys(csOut);
-    dbOut.allocate(numX, numY, numZ, numValues, spaceDim, dataDim);
-    dbOut.setX(x, numX);
-    dbOut.setY(y, numY);
-    dbOut.setZ(z, numZ);
-    dbOut.setData(coords, numX*numY*numZ, spaceDim, data, numX*numY*numZ, numValues);
-    dbOut.setNames(names, numValues);
-    dbOut.setUnits(units, numValues);
+    SimpleGridDBData dataOut;
+    dataOut.setCoordSys(csOut);
+    dataOut.allocate(numX, numY, numZ, numValues, spaceDim, dataDim);
+    std::copy(x, x+numX, dataOut.getX().data());
+    std::copy(y, y+numY, dataOut.getY().data());
+    std::copy(z, z+numZ, dataOut.getZ().data());
+    dataOut.setNames(names);
+    dataOut.setUnits(units);
+
+    const size_t numLocs = numX * numY * numZ;
+    for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
+        double* const valuesOut = dataOut.getData(iLoc*numValues);assert(valuesOut);
+        for (size_t iValues = 0; iValues < numValues; ++iValues) {
+            valuesOut[iValues] = data[i++];
+        } // for
+    } // for
 
     const char* filename = "data/grid_xyz.spatialdb";
-    dbOut.setFilename(filename);
-    SimpleGridAscii::write(dbOut);
+    SimpleGridDBIO::write(dataOut, filename);
 
-    SimpleGridDB dbIn;
-    dbIn.setFilename(filename);
-    dbIn.open();
+    SimpleGridDBData dataIn;
+    SimpleGridDBIO::read(&dataIn, filename);
 
-    CHECK(numX == dbIn._numX);
-    CHECK(numY == dbIn._numY);
-    CHECK(numZ == dbIn._numZ);
-    CHECK(dataDim == dbIn._dataDim);
-    CHECK(spaceDim == dbIn._spaceDim);
-    REQUIRE(numValues == dbIn._numValues);
+    CHECK(numX == dataIn.getNumX());
+    CHECK(numY == dataIn.getNumY());
+    CHECK(numZ == dataIn.getNumZ());
+    CHECK(dataDim == dataIn.getDataDim());
+    CHECK(spaceDim == dataIn.getSpaceDim());
+    REQUIRE(numValues == dataIn.getNumValues());
 
-    CHECK(dbIn._names);
-    CHECK(dbIn._units);
-    for (size_t iVal = 0; iVal < numValues; ++iVal) {
-        CHECK(std::string(names[iVal]) == dbIn._names[iVal]);
-        CHECK(std::string(units[iVal]) == dbIn._units[iVal]);
+    // Check names and units
+    for (size_t iValues = 0; iValues < numValues; ++iValues) {
+        CHECK(names[iValues] == std::string(dataIn.getName(iValues)));
+        CHECK(units[iValues] == std::string(dataIn.getUnits(iValues)));
+    } // for
+
+    // Check coordinates
+    const double tolerance = 1.0e-06;
+    const std::vector<double>& xIn = dataIn.getX();
+    REQUIRE(xIn.size() == numX);
+    for (size_t i = 0; i < numX; ++i) {
+        CHECK_THAT(xIn[i], Catch::Matchers::WithinAbs(x[i], tolerance));
+    } // for
+    const std::vector<double>& yIn = dataIn.getY();
+    REQUIRE(yIn.size() == numY);
+    for (size_t i = 0; i < numY; ++i) {
+        CHECK_THAT(yIn[i], Catch::Matchers::WithinAbs(y[i], tolerance));
+    } // for
+    const std::vector<double>& zIn = dataIn.getZ();
+    REQUIRE(zIn.size() == numZ);
+    for (size_t i = 0; i < numZ; ++i) {
+        CHECK_THAT(zIn[i], Catch::Matchers::WithinAbs(z[i], tolerance));
     } // for
 
     // Check to make sure values were read in correctly
-    assert(dbIn._data);
-    const double tolerance = 1.0e-06;
     for (size_t iX = 0, i = 0; iX < numX; ++iX) {
         for (size_t iZ = 0; iZ < numZ; ++iZ) {
             for (size_t iY = 0; iY < numY; ++iY) {
-                const size_t iD = dbIn._getDataIndex(iX, numX, iY, numY, iZ, numZ);
-                for (size_t iVal = 0; iVal < numValues; ++iVal, ++i) {
+                const size_t indexData = dataIn.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                const double* dataLoc = dataIn.getData(indexData);assert(dataLoc);
+                for (size_t iValues = 0; iValues < numValues; ++iValues, ++i) {
                     const double toleranceV = (fabs(data[i]) > 0.0) ? tolerance*data[i] : tolerance;
-                    CHECK_THAT(dbIn._data[iD+iVal], Catch::Matchers::WithinAbs(data[i], toleranceV));
+                    CHECK_THAT(dataLoc[iValues], Catch::Matchers::WithinAbs(data[i], toleranceV));
                 } // for
             } // for
         } // for
     } // for
 
+#if 0
     // Perform simple nearest query to ensure consistency of read/query
     dbIn.setQueryValues(names, numValues);
     const size_t numLocs = 3;
@@ -159,19 +174,20 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSCart(void) {
         double data[numValues];
         int err = dbIn.query(data, numValues, &points[iLoc*spaceDim], spaceDim, &csOut);
         REQUIRE(errE[iLoc] == err);
-        for (size_t iVal = 0; iVal < numValues; ++iVal) {
-            const double valueE = dataE[iLoc*numValues+iVal];
+        for (size_t iValues = 0; iValues < numValues; ++iValues) {
+            const double valueE = dataE[iLoc*numValues+iValues];
             const double toleranceV = fabs(valueE) > 0.0 ? tolerance*valueE : tolerance;
-            CHECK_THAT(data[iVal], Catch::Matchers::WithinAbs(valueE, toleranceV));
+            CHECK_THAT(data[iValues], Catch::Matchers::WithinAbs(valueE, toleranceV));
         } // for
     } // for
+#endif
 } // testIOCSCart
 
 
 // ----------------------------------------------------------------------
 // Test filename(), write(), read().
 void
-spatialdata::spatialdb::TestSimpleGridAscii::testIOCSGeo(void) {
+spatialdata::spatialdb::TestSimpleGridDBIO::testIOCSGeo(void) {
     const size_t numX = 1;
     const size_t numY = 2;
     const size_t numZ = 3;
@@ -183,14 +199,6 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSGeo(void) {
     const double y[numY] = { 0.0, 1.0 };
     const double z[numZ] = { -2.0, -1.0, 2.0 };
 
-    const double coords[numX*numY*numZ*spaceDim] = {
-        -2.0,  0.0, -2.0,
-        -2.0,  1.0, -2.0,
-        -2.0,  0.0, -1.0,
-        -2.0,  1.0, -1.0,
-        -2.0,  0.0,  2.0,
-        -2.0,  1.0,  2.0,
-    };
     const double data[numX*numY*numZ*numValues] = {
         6.6,  3.4, 2.3, 8.3, 3.6, 9.4, 8.4, 3.7, 7.3, 1.5,
         5.5,  6.7, 3.4, 9.4, 4.7, 1.5, 9.5, 4.8, 8.4, 2.6,
@@ -199,59 +207,81 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSGeo(void) {
         6.3,  6.9, 6.7, 2.7, 7.0, 4.8, 2.8, 7.0, 0.7, 5.9,
         3.4,  6.4, 7.8, 3.8, 8.1, 5.9, 3.9, 8.0, 0.8, 6.0,
     };
-    const char* names[numValues] = { "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten" };
-    const char* units[numValues] = { "m", "none", "m", "Pa", "Pa", "m", "kg", "m", "none", "none" };
+    const std::vector<std::string> names({ "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten" });
+    const std::vector<std::string> units({ "m", "none", "m", "Pa", "Pa", "m", "kg", "m", "none", "none" });
+    std::shared_ptr<spatialdata::geocoords::CSGeo> cs(new spatialdata::geocoords::CSGeo());assert(cs);
+    cs->setString("+proj=tmerc +datum=WGS84 +lon_0=-122.6765 +lat_0=45.5231 +k=0.9996 +units=m +vunits=m");
+    std::shared_ptr<spatialdata::geocoords::CoordSys> csOut = std::move(cs);
 
-    spatialdata::geocoords::CSGeo csOut;
-    csOut.setString("+proj=tmerc +datum=WGS84 +lon_0=-122.6765 +lat_0=45.5231 +k=0.9996 +units=m +vunits=m");
-    SimpleGridDB dbOut;
-    dbOut.setCoordSys(csOut);
-    dbOut.allocate(numX, numY, numZ, numValues, spaceDim, dataDim);
-    dbOut.setX(x, numX);
-    dbOut.setY(y, numY);
-    dbOut.setZ(z, numZ);
-    dbOut.setData(coords, numX*numY*numZ, spaceDim, data, numX*numY*numZ, numValues);
-    dbOut.setNames(names, numValues);
-    dbOut.setUnits(units, numValues);
+    SimpleGridDBData dataOut;
+    dataOut.setCoordSys(csOut);
+    dataOut.allocate(numX, numY, numZ, numValues, spaceDim, dataDim);
+    std::copy(x, x+numX, dataOut.getX().data());
+    std::copy(y, y+numY, dataOut.getY().data());
+    std::copy(z, z+numZ, dataOut.getZ().data());
+    dataOut.setNames(names);
+    dataOut.setUnits(units);
+
+    const size_t numLocs = numX * numY * numZ;
+    for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
+        double* const valuesOut = dataOut.getData(iLoc*numValues);assert(valuesOut);
+        for (size_t iValues = 0; iValues < numValues; ++iValues) {
+            valuesOut[iValues] = data[i++];
+        } // for
+    } // for
 
     const char* filename = "data/grid_geo.spatialdb";
-    dbOut.setFilename(filename);
-    SimpleGridAscii::write(dbOut);
+    SimpleGridDBIO::write(dataOut, filename);
 
-    SimpleGridDB dbIn;
-    dbIn.setDescription("GridDB geo");
-    dbIn.setFilename(filename);
-    dbIn.open();
+    SimpleGridDBData dataIn;
+    SimpleGridDBIO::read(&dataIn, filename);
 
-    CHECK(numX == dbIn._numX);
-    CHECK(numY == dbIn._numY);
-    CHECK(numZ == dbIn._numZ);
-    CHECK(dataDim == dbIn._dataDim);
-    CHECK(spaceDim == dbIn._spaceDim);
-    REQUIRE(numValues == dbIn._numValues);
+    CHECK(numX == dataIn.getNumX());
+    CHECK(numY == dataIn.getNumY());
+    CHECK(numZ == dataIn.getNumZ());
+    CHECK(dataDim == dataIn.getDataDim());
+    CHECK(spaceDim == dataIn.getSpaceDim());
+    REQUIRE(numValues == dataIn.getNumValues());
 
-    CHECK(dbIn._names);
-    CHECK(dbIn._units);
-    for (size_t iVal = 0; iVal < numValues; ++iVal) {
-        CHECK(std::string(names[iVal]) == dbIn._names[iVal]);
-        CHECK(std::string(units[iVal]) == dbIn._units[iVal]);
+    // Check names and units
+    for (size_t iValues = 0; iValues < numValues; ++iValues) {
+        CHECK(names[iValues] == std::string(dataIn.getName(iValues)));
+        CHECK(units[iValues] == std::string(dataIn.getUnits(iValues)));
+    } // for
+
+    // Check coordinates
+    const double tolerance = 1.0e-06;
+    const std::vector<double>& xIn = dataIn.getX();
+    REQUIRE(xIn.size() == numX);
+    for (size_t i = 0; i < numX; ++i) {
+        CHECK_THAT(xIn[i], Catch::Matchers::WithinAbs(x[i], tolerance));
+    } // for
+    const std::vector<double>& yIn = dataIn.getY();
+    REQUIRE(yIn.size() == numY);
+    for (size_t i = 0; i < numY; ++i) {
+        CHECK_THAT(yIn[i], Catch::Matchers::WithinAbs(y[i], tolerance));
+    } // for
+    const std::vector<double>& zIn = dataIn.getZ();
+    REQUIRE(zIn.size() == numZ);
+    for (size_t i = 0; i < numZ; ++i) {
+        CHECK_THAT(zIn[i], Catch::Matchers::WithinAbs(z[i], tolerance));
     } // for
 
     // Check to make sure values were read in correctly
-    assert(dbIn._data);
-    const double tolerance = 1.0e-06;
     for (size_t iX = 0, i = 0; iX < numX; ++iX) {
         for (size_t iZ = 0; iZ < numZ; ++iZ) {
             for (size_t iY = 0; iY < numY; ++iY) {
-                const size_t iD = dbIn._getDataIndex(iX, numX, iY, numY, iZ, numZ);
-                for (size_t iVal = 0; iVal < numValues; ++iVal, ++i) {
+                const size_t indexData = dataIn.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                const double* dataLoc = dataIn.getData(indexData);assert(dataLoc);
+                for (size_t iValues = 0; iValues < numValues; ++iValues, ++i) {
                     const double toleranceV = (fabs(data[i]) > 0.0) ? tolerance*data[i] : tolerance;
-                    CHECK_THAT(dbIn._data[iD+iVal], Catch::Matchers::WithinAbs(data[i], toleranceV));
+                    CHECK_THAT(dataLoc[iValues], Catch::Matchers::WithinAbs(data[i], toleranceV));
                 } // for
             } // for
         } // for
     } // for
 
+#if 0
     // Perform simple nearest query to ensure consistency of read/query
     dbIn.setQueryValues(names, numValues);
     const size_t numLocs = 3;
@@ -271,19 +301,20 @@ spatialdata::spatialdb::TestSimpleGridAscii::testIOCSGeo(void) {
         double data[numValues];
         int err = dbIn.query(data, numValues, &points[iLoc*spaceDim], spaceDim, &csOut);
         REQUIRE(errE[iLoc] == err);
-        for (size_t iVal = 0; iVal < numValues; ++iVal) {
-            const double valueE = dataE[iLoc*numValues+iVal];
+        for (size_t iValues = 0; iValues < numValues; ++iValues) {
+            const double valueE = dataE[iLoc*numValues+iValues];
             const double toleranceV = fabs(valueE) > 0.0 ? tolerance*valueE : tolerance;
-            CHECK_THAT(data[iVal], Catch::Matchers::WithinAbs(valueE, toleranceV));
+            CHECK_THAT(data[iValues], Catch::Matchers::WithinAbs(valueE, toleranceV));
         } // for
     } // for
+#endif
 } // testIOCSGeo
 
 
 // ----------------------------------------------------------------------
 // Test read() with comments.
 void
-spatialdata::spatialdb::TestSimpleGridAscii::testReadComments(void) {
+spatialdata::spatialdb::TestSimpleGridDBIO::testReadComments(void) {
     const size_t numX = 1;
     const size_t numY = 1;
     const size_t numZ = 5;
@@ -302,7 +333,7 @@ spatialdata::spatialdb::TestSimpleGridAscii::testReadComments(void) {
         1.0e+21, 0.2, 1.2, 2.2, 3.2, 4.2, 5.2, 6.2, 7.2, 8.2, 9.2, 10.2, 11.2,
         1.0e+22, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1,
     };
-    const char* names[numValues] = {
+    const std::vector<std::string> names({
         "viscosity",
         "viscous_strain_xx",
         "viscous_strain_yy",
@@ -316,8 +347,8 @@ spatialdata::spatialdb::TestSimpleGridAscii::testReadComments(void) {
         "total_strain_xy",
         "total_strain_yz",
         "total_strain_xz",
-    };
-    const char* units[numValues] = {
+    });
+    const std::vector<std::string> units({
         "Pa*s",
         "none",
         "none",
@@ -331,54 +362,57 @@ spatialdata::spatialdb::TestSimpleGridAscii::testReadComments(void) {
         "none",
         "none",
         "none",
-    };
+    });
 
     const char* filename = "data/grid_comments.spatialdb";
-    SimpleGridDB dbIn;
-    dbIn.setDescription("GridDB geo");
-    dbIn.setFilename(filename);
-    dbIn.open();
+    SimpleGridDBData dataIn;
+    SimpleGridDBIO::read(&dataIn, filename);
 
-    CHECK(numX == dbIn._numX);
-    CHECK(numY == dbIn._numY);
-    CHECK(numZ == dbIn._numZ);
-    CHECK(dataDim == dbIn._dataDim);
-    CHECK(spaceDim == dbIn._spaceDim);
-    REQUIRE(numValues == dbIn._numValues);
+    CHECK(numX == dataIn.getNumX());
+    CHECK(numY == dataIn.getNumY());
+    CHECK(numZ == dataIn.getNumZ());
+    CHECK(dataDim == dataIn.getDataDim());
+    CHECK(spaceDim == dataIn.getSpaceDim());
+    REQUIRE(numValues == dataIn.getNumValues());
 
-    CHECK(dbIn._names);
-    CHECK(dbIn._units);
-    for (size_t iVal = 0; iVal < numValues; ++iVal) {
-        CHECK(std::string(names[iVal]) == dbIn._names[iVal]);
-        CHECK(std::string(units[iVal]) == dbIn._units[iVal]);
+    // Check names and units
+    for (size_t iValues = 0; iValues < numValues; ++iValues) {
+        CHECK(names[iValues] == std::string(dataIn.getName(iValues)));
+        CHECK(units[iValues] == std::string(dataIn.getUnits(iValues)));
     } // for
 
     // Check coordinates
-    assert(dbIn._x);
     const double tolerance = 1.0e-06;
+    const std::vector<double>& xIn = dataIn.getX();
+    REQUIRE(xIn.size() == numX);
     for (size_t i = 0; i < numX; ++i) {
-        CHECK_THAT(dbIn._x[i], Catch::Matchers::WithinAbs(x[i], tolerance));
+        CHECK_THAT(xIn[i], Catch::Matchers::WithinAbs(x[i], tolerance));
     } // for
+    const std::vector<double>& yIn = dataIn.getY();
+    REQUIRE(yIn.size() == numY);
     for (size_t i = 0; i < numY; ++i) {
-        CHECK_THAT(dbIn._y[i], Catch::Matchers::WithinAbs(y[i], tolerance));
+        CHECK_THAT(yIn[i], Catch::Matchers::WithinAbs(y[i], tolerance));
     } // for
+    const std::vector<double>& zIn = dataIn.getZ();
+    REQUIRE(zIn.size() == numZ);
     for (size_t i = 0; i < numZ; ++i) {
-        CHECK_THAT(dbIn._z[i], Catch::Matchers::WithinAbs(z[i], tolerance));
+        CHECK_THAT(zIn[i], Catch::Matchers::WithinAbs(z[i], tolerance));
     } // for
 
     // Check to make sure values were read in correctly
-    assert(dbIn._data);
     for (size_t iX = 0, i = 0; iX < numX; ++iX) {
         for (size_t iZ = 0; iZ < numZ; ++iZ) {
             for (size_t iY = 0; iY < numY; ++iY) {
-                const size_t iD = dbIn._getDataIndex(iX, numX, iY, numY, iZ, numZ);
-                for (size_t iVal = 0; iVal < numValues; ++iVal, ++i) {
+                const size_t indexData = dataIn.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                const double* dataLoc = dataIn.getData(indexData);assert(dataLoc);
+                for (size_t iValues = 0; iValues < numValues; ++iValues, ++i) {
                     const double toleranceV = (fabs(data[i]) > 0.0) ? tolerance*data[i] : tolerance;
-                    CHECK_THAT(dbIn._data[iD+iVal], Catch::Matchers::WithinAbs(data[i], toleranceV));
+                    CHECK_THAT(dataLoc[iValues], Catch::Matchers::WithinAbs(data[i], toleranceV));
                 } // for
             } // for
         } // for
     } // for
+
 } // testReadComments
 
 

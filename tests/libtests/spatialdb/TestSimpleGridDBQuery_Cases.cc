@@ -10,125 +10,126 @@
 
 #include <portinfo>
 
-#include "TestSimpleGridDB.hh" // ISA TestSimpleGridDB
+#include "TestSimpleGridDBQuery.hh" // ISA TestSimpleGridDBQuery
 
-#include "spatialdata/spatialdb/SimpleGridDB.hh" // USES SimpleGridDB
-#include "spatialdata/geocoords/CSCart.hh" // USES CSCart
+#include "spatialdata/spatialdb/SimpleGridDBQuery.hh" // USES SimpleGridDBQuery
 
 #include "catch2/catch_test_macros.hpp"
 
 // ----------------------------------------------------------------------
 namespace spatialdata {
     namespace spatialdb {
-        class TestSimpleGridDB_Cases;
+        class TestSimpleGridDBQuery_Cases;
 
     } // spatialdb
 } // spatialdata
 
-class spatialdata::spatialdb::TestSimpleGridDB_Cases {
+class spatialdata::spatialdb::TestSimpleGridDBQuery_Cases {
     // PUBLIC METHODS /////////////////////////////////////////////////////////////////////////////
 public:
 
     // Factories
     static
-    TestSimpleGridDB_Data* Line1D(void);
+    TestSimpleGridDBQuery_Data* Line1D(void);
 
     static
-    TestSimpleGridDB_Data* Line2D(void);
+    TestSimpleGridDBQuery_Data* Line2D(void);
 
     static
-    TestSimpleGridDB_Data* Line3D(void);
+    TestSimpleGridDBQuery_Data* Line3D(void);
 
     static
-    TestSimpleGridDB_Data* Area2D(void);
+    TestSimpleGridDBQuery_Data* Area2D(void);
 
     static
-    TestSimpleGridDB_Data* Area3D(void);
+    TestSimpleGridDBQuery_Data* Area3D(void);
 
     static
-    TestSimpleGridDB_Data* Volume3D(void);
+    TestSimpleGridDBQuery_Data* Volume3D(void);
 
-}; // class TestSimpleGridDB
+}; // class TestSimpleGridDBQuery
 
 // ------------------------------------------------------------------------------------------------
 // Static test cases
-TEST_CASE("TestSimpleGridDB::testConstructor", "[TestSimpleGridDB]") {
-    spatialdata::spatialdb::TestSimpleGridDB::testConstructor();
+TEST_CASE("TestSimpleGridDBQuery::testConstructor", "[TestSimpleGridDBQuery]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery::testConstructor();
 }
-TEST_CASE("TestSimpleGridDB::testAccessors", "[TestSimpleGridDB]") {
-    spatialdata::spatialdb::TestSimpleGridDB::testAccessors();
-}
-
-// Data test cases
-TEST_CASE("TestSimpleGridDB::Line1D::testGetNamesDBValues", "[TestSimpleGridDB][Line1D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line1D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Line1D::testQueryNearest", "[TestSimpleGridDB][Line1D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line1D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Line1D::testQueryLinear", "[TestSimpleGridDB][Line1D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line1D()).testQueryLinear();
-}
-
-TEST_CASE("TestSimpleGridDB::Line2D::testGetNamesDBValues", "[TestSimpleGridDB][Line2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line2D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Line2D::testQueryNearest", "[TestSimpleGridDB][Line2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line2D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Line2D::testQueryLinear", "[TestSimpleGridDB][Line2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line2D()).testQueryLinear();
-}
-
-TEST_CASE("TestSimpleGridDB::Line3D::testGetNamesDBValues", "[TestSimpleGridDB][Line3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Line3D::testQueryNearest", "[TestSimpleGridDB][Line3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Line3D::testQueryLinear", "[TestSimpleGridDB][Line3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D()).testQueryLinear();
-}
-
-TEST_CASE("TestSimpleGridDB::Area2D::testGetNamesDBValues", "[TestSimpleGridDB][Area2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area2D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Area2D::testQueryNearest", "[TestSimpleGridDB][Area2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area2D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Area2D::testQueryLinear", "[TestSimpleGridDB][Area2D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area2D()).testQueryLinear();
-}
-
-TEST_CASE("TestSimpleGridDB::Area3D::testGetNamesDBValues", "[TestSimpleGridDB][Area3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Area3D::testQueryNearest", "[TestSimpleGridDB][Area3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Area3D::testQueryLinear", "[TestSimpleGridDB][Area3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D()).testQueryLinear();
-}
-
-TEST_CASE("TestSimpleGridDB::Volume3D::testGetNamesDBValues", "[TestSimpleGridDB][Volume3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D()).testGetNamesDBValues();
-}
-TEST_CASE("TestSimpleGridDB::Volume3D::testQueryNearest", "[TestSimpleGridDB][Volume3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D()).testQueryNearest();
-}
-TEST_CASE("TestSimpleGridDB::Volume3D::testQueryLinear", "[TestSimpleGridDB][Volume3D]") {
-    spatialdata::spatialdb::TestSimpleGridDB(spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D()).testQueryLinear();
+TEST_CASE("TestSimpleGridDBQuery::Line1D::testAccessors", "[TestSimpleGridDBQuery][Line1D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery::testAccessors();
 }
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Line1D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+// Data test cases
+TEST_CASE("TestSimpleGridDBQuery::Line1D::testQueryValues", "[TestSimpleGridDBQuery][Line1D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line1D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line1D::testQueryNearest", "[TestSimpleGridDBQuery][Line1D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line1D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line1D::testQueryLinear", "[TestSimpleGridDBQuery][Line1D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line1D()).testQueryLinear();
+}
+
+TEST_CASE("TestSimpleGridDBQuery::Line2D::testQueryValues", "[TestSimpleGridDBQuery][Line2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line2D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line2D::testQueryNearest", "[TestSimpleGridDBQuery][Line2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line2D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line2D::testQueryLinear", "[TestSimpleGridDBQuery][Line2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line2D()).testQueryLinear();
+}
+
+TEST_CASE("TestSimpleGridDBQuery::Line3D::testQueryValues", "[TestSimpleGridDBQuery][Line3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line3D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line3D::testQueryNearest", "[TestSimpleGridDBQuery][Line3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line3D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Line3D::testQueryLinear", "[TestSimpleGridDBQuery][Line3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line3D()).testQueryLinear();
+}
+
+TEST_CASE("TestSimpleGridDBQuery::Area2D::testQueryValues", "[TestSimpleGridDBQuery][Area2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area2D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Area2D::testQueryNearest", "[TestSimpleGridDBQuery][Area2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area2D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Area2D::testQueryLinear", "[TestSimpleGridDBQuery][Area2D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area2D()).testQueryLinear();
+}
+
+TEST_CASE("TestSimpleGridDBQuery::Area3D::testQueryValues", "[TestSimpleGridDBQuery][Area3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area3D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Area3D::testQueryNearest", "[TestSimpleGridDBQuery][Area3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area3D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Area3D::testQueryLinear", "[TestSimpleGridDBQuery][Area3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area3D()).testQueryLinear();
+}
+
+TEST_CASE("TestSimpleGridDBQuery::Volume3D::testQueryValues", "[TestSimpleGridDBQuery][Volume3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Volume3D()).testQueryValues();
+}
+TEST_CASE("TestSimpleGridDBQuery::Volume3D::testQueryNearest", "[TestSimpleGridDBQuery][Volume3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Volume3D()).testQueryNearest();
+}
+TEST_CASE("TestSimpleGridDBQuery::Volume3D::testQueryLinear", "[TestSimpleGridDBQuery][Volume3D]") {
+    spatialdata::spatialdb::TestSimpleGridDBQuery(spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Volume3D()).testQueryLinear();
+}
+
+// ------------------------------------------------------------------------------------------------
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line1D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 3;
     data->spaceDim = 1;
     data->numValues = 2;
     data->dataDim = 1;
+    data->description = "Line1D";
 
     static const double dbX[3] = { -3.0, 1.0, 2.0, };
     data->dbX = dbX;
@@ -168,22 +169,21 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Line1D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_line1d.spatialdb";
-
-    return data;
+    return data.release();
 } // Line1D
 
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Line2D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line2D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 1;
     data->numY = 3;
     data->spaceDim = 2;
     data->numValues = 2;
     data->dataDim = 1;
+    data->description = "Line2D";
 
     static const double dbX[1] = { 2.0, };
     data->dbX = dbX;
@@ -226,16 +226,14 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Line2D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_line2d.spatialdb";
-
-    return data;
+    return data.release();
 } // Line2D
 
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Line3D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 1;
     data->numY = 1;
@@ -243,6 +241,7 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D(void) {
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 1;
+    data->description = "Line3D";
 
     static const double dbX[1] = { 2.0, };
     data->dbX = dbX;
@@ -288,22 +287,21 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Line3D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_line3d.spatialdb";
-
-    return data;
+    return data.release();
 } // Line3D
 
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Area2D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area2D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 3;
     data->numY = 2;
     data->spaceDim = 2;
     data->numValues = 2;
     data->dataDim = 2;
+    data->description = "Area2D";
 
     static const double dbX[3] = { -3.0, 1.0, 2.0, };
     data->dbX = dbX;
@@ -349,16 +347,14 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Area2D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_area2d.spatialdb";
-
-    return data;
+    return data.release();
 } // Area2D
 
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Area3D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 3;
     data->numY = 1;
@@ -366,6 +362,7 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D(void) {
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 2;
+    data->description = "Area3D";
 
     static const double dbX[3] = { -3.0, 1.0, 2.0, };
     data->dbX = dbX;
@@ -414,16 +411,14 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Area3D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_area3d.spatialdb";
-
-    return data;
+    return data.release();
 } // Area3D
 
 
 // ------------------------------------------------------------------------------------------------
-spatialdata::spatialdb::TestSimpleGridDB_Data*
-spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D(void) {
-    spatialdata::spatialdb::TestSimpleGridDB_Data* data = new TestSimpleGridDB_Data;assert(data);
+spatialdata::spatialdb::TestSimpleGridDBQuery_Data*
+spatialdata::spatialdb::TestSimpleGridDBQuery_Cases::Volume3D(void) {
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleGridDBQuery_Data> data(new TestSimpleGridDBQuery_Data);REQUIRE(data);
 
     data->numX = 3;
     data->numY = 2;
@@ -431,6 +426,7 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D(void) {
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 3;
+    data->description = "Volume3D";
 
     static const double dbX[3] = { -3.0, 1.0, 2.0, };
     data->dbX = dbX;
@@ -497,9 +493,7 @@ spatialdata::spatialdb::TestSimpleGridDB_Cases::Volume3D(void) {
     static const int errFlags[5] = { 0, 0, 0, 1, 1, };
     data->errFlags = errFlags;
 
-    data->filename = "data/grid_volume3d.spatialdb";
-
-    return data;
+    return data.release();
 } // Volume3D
 
 

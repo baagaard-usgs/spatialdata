@@ -15,11 +15,10 @@
 #include "SimpleDBQuery.hh" // implementation of class methods
 
 #include "SimpleDBData.hh" // USEs SimpleDBData
+#include "Exception.hh" // USES OutOfBounds
 
 #include "spatialdata/geocoords/CoordSys.hh" // USES CoordSys
 #include "spatialdata/geocoords/Converter.hh" // USES Converter
-
-#include "Exception.hh" // USES OutOfBounds
 
 #include <math.h> // USES MAXFLOAT
 #if !defined(MAXFLOAT)

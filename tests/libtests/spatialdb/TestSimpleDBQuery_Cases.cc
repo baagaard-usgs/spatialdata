@@ -56,13 +56,14 @@ TEST_CASE("TestSimpleDBQuery::testVolume", "[TestSimpleDBQuery][3D]") {
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDBQuery_Data*
 spatialdata::spatialdb::TestSimpleDBQuery_3D::createData(void) {
-    spatialdata::spatialdb::TestSimpleDBQuery_Data* data = new TestSimpleDBQuery_Data;assert(data);
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleDBQuery_Data> data(new TestSimpleDBQuery_Data());assert(data);
 
     data->numLocs = 5;
     data->spaceDim = 3;
     data->numValues = 3;
     data->dataDim = 3;
     data->numPoints = 4;
+    data->description = "TestSimpleDBQuery_3D";
 
     data->dist2 = 9.86850000e+00;
     data->area = 7.28666752e+00;
@@ -113,7 +114,7 @@ spatialdata::spatialdb::TestSimpleDBQuery_3D::createData(void) {
     };
     data->areaDir = areaDir;
 
-    return data;
+    return data.release();
 } // TestSimpleDBQuery_3D
 
 

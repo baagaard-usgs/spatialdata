@@ -13,13 +13,8 @@
 #include "spatialdata/spatialdb/SpatialDB.hh" // Test subject
 
 #include "spatialdata/spatialdb/SimpleDB.hh" // USES SimpleDB
-#include "spatialdata/spatialdb/SimpleIO.hh" // USES SimpleIOAscii
-#include "spatialdata/spatialdb/SimpleIOAscii.hh" // USES SimpleIOAscii
-extern "C" {
-#include "spatialdata/spatialdb/cspatialdb.h"
-}
+#include "spatialdata/spatialdb/SimpleDBIO.hh" // USES SimpleDBIO
 
-#include "spatialdata/geocoords/CoordSys.hh" // USES CSCart
 #include "spatialdata/geocoords/CSCart.hh" // USES CSCart
 
 #include "catch2/catch_test_macros.hpp"
@@ -51,13 +46,10 @@ public:
     /// Test SpatialDB queries w/multiple points.
     void testDBmulti(void);
 
-    /// Test C API of SpatialDB
-    void testDB_CAPI(void);
-
     // PRIVATE MEMBERS ////////////////////////////////////////////////////////////////////////////
 private:
 
-    SpatialDB* _db; ///< Test subject
+    std::unique_ptr<SpatialDB> _db; ///< Test subject
 
 }; // class TestSpatialDB
 
@@ -68,55 +60,51 @@ TEST_CASE("TestSpatialDB::testDB", "[TestSpatialDB]") {
 TEST_CASE("TestSpatialDB::testDBmulti", "[TestSpatialDB]") {
     spatialdata::spatialdb::TestSpatialDB().testDBmulti();
 }
-TEST_CASE("TestSpatialDB::testDB_CAPI", "[TestSpatialDB]") {
-    spatialdata::spatialdb::TestSpatialDB().testDB_CAPI();
-}
 
 // ----------------------------------------------------------------------
 // Constructor.
 spatialdata::spatialdb::TestSpatialDB::TestSpatialDB(void) {
-    spatialdata::spatialdb::SimpleDB* db = new spatialdata::spatialdb::SimpleDB;assert(db);
+    std::unique_ptr<spatialdata::spatialdb::SimpleDB> db(new spatialdata::spatialdb::SimpleDB("TestSpatialDB"));assert(db);
 
     const char* filename = "data/spatialdb.dat";
-    SimpleIOAscii iohandler;
-    iohandler.setFilename(filename);
-    db->setIOHandler(&iohandler);
+    db->setFilename(filename);
     db->open();
     db->setQueryType(spatialdata::spatialdb::SimpleDB::NEAREST);
 
-    _db = db;
+    _db = std::move(db);
 } // setUp
 
 
 // ----------------------------------------------------------------------
 // Destructor.
-spatialdata::spatialdb::TestSpatialDB::~TestSpatialDB(void) {
-    delete _db;_db = 0;
-} // tearDown
+spatialdata::spatialdb::TestSpatialDB::~TestSpatialDB(void) {}
 
 
 // ----------------------------------------------------------------------
 // Test SpatialDB
 void
-spatialdata::spatialdb::TestSpatialDB::testDB(void) { // testDB
+spatialdata::spatialdb::TestSpatialDB::testDB(void) {
     assert(_db);
 
-    const char* names[4] = {"two", "one", "four", "three"};
-    const size_t numVals = 4;
+    const std::string& description = "testDB";
+    _db->setDescription(description.c_str());
+    CHECK(description == std::string(_db->getDescription()));
+
+    const std::vector<std::string> names({"two", "one", "four", "three"});
+    const size_t numValues = 4;
     const double queryLoc[3] = { 0.6, 0.1, 0.2 };
     const double vals[4] = { 6.3e+3, 4.7, 0.8, 1.2e+6 };
     const int errFlags[1] = { 0 };
-    const int spaceDim = 3;
 
-    _db->setQueryValues(names, numVals);
+    _db->setQueryValues(names);
 
-    double* valsQ = (0 < numVals) ? new double[numVals] : NULL;
+    double* valsQ = (0 < numValues) ? new double[numValues] : NULL;
     spatialdata::geocoords::CSCart csCart;
-    const int err = _db->query(valsQ, numVals, queryLoc, spaceDim, &csCart);
+    const int err = _db->query(valsQ, numValues, queryLoc, &csCart);
     REQUIRE(err == errFlags[0]);
 
     const double tolerance = 1.0e-06;
-    for (size_t iVal = 0; iVal < numVals; ++iVal) {
+    for (size_t iVal = 0; iVal < numValues; ++iVal) {
         const double toleranceV = fabs(vals[iVal]) * tolerance;
         CHECK_THAT(valsQ[iVal], Catch::Matchers::WithinAbs(vals[iVal], toleranceV));
     } // for
@@ -129,81 +117,43 @@ spatialdata::spatialdb::TestSpatialDB::testDB(void) { // testDB
 // ----------------------------------------------------------------------
 // Test SpatialDB queries w/multiple points.
 void
-spatialdata::spatialdb::TestSpatialDB::testDBmulti(void) { // testDBmulti
+spatialdata::spatialdb::TestSpatialDB::testDBmulti(void) {
     assert(_db);
 
-    const size_t numVals = 4;
+    const size_t numValues = 4;
     const size_t numLocs = 2;
     const size_t spaceDim = 3;
-    const char* names[numVals] = {"two", "one", "four", "three"};
+    const std::vector<std::string> names({"two", "one", "four", "three"});
     const double queryLocs[numLocs*spaceDim] = {
         0.6, 0.1, 0.2,
         0.1, 0.6, 0.3,
     };
-    const double vals[numLocs*numVals] = {
+    const double vals[numLocs*numValues] = {
         6.3e+3, 4.7, 0.8, 1.2e+6,
         3.6e+3, 7.4, 8.0, 2.1e+6,
     };
     const int errFlags[numLocs] = { 0, 0 };
 
-    _db->setQueryValues(names, numVals);
+    _db->setQueryValues(names);
 
-    size_t size = numLocs * numVals;
-    double* valsQ = (0 < size) ? new double[size] : NULL;
-    size = numLocs;
-    int* errQ = (0 < size) ? new int[size] : NULL;
-
+    size_t size = numLocs * numValues;
+    double valsQ[size];
+    int errQ[size];
     spatialdata::geocoords::CSCart csCart;
 
-    _db->multiquery(valsQ, numLocs, numVals,
-                    errQ, numLocs, queryLocs, numLocs, spaceDim, &csCart);
+    _db->multiquery(valsQ, errQ, queryLocs, numLocs, numValues, &csCart);
 
     const double tolerance = 1.0e-06;
     for (size_t iLoc = 0; iLoc < numLocs; ++iLoc) {
         REQUIRE(errFlags[iLoc] == errQ[iLoc]);
-        for (size_t iVal = 0, index = 0; iVal < numVals; ++iVal, index++) {
+        for (size_t iVal = 0, index = 0; iVal < numValues; ++iVal, index++) {
             const double toleranceV = fabs(vals[index]) * tolerance;
             CHECK_THAT(valsQ[index], Catch::Matchers::WithinAbs(vals[index], toleranceV));
         }
     } // for
 
-    delete[] valsQ;valsQ = NULL;
-    delete[] errQ;errQ = NULL;
-
     _db->close();
 } // testDBmulti
-
-
-// ----------------------------------------------------------------------
-// Test SpatialDB w/C query
-void
-spatialdata::spatialdb::TestSpatialDB::testDB_CAPI(void) {
-    assert(_db);
-
-    const char* names[2] = {"two", "one"};
-    const size_t numVals = 2;
-    const double queryLoc[3] = { 0.6, 0.1, 0.2 };
-    const size_t spaceDim = 3;
-    const double vals[2] = { 6.3e+3, 4.7 };
-    const int errFlags[1] = { 0 };
-
-    _db->setQueryValues(names, numVals);
-
-    double* valsQ = (0 < numVals) ? new double[numVals] : 0;
-    spatialdata::geocoords::CSCart csCart;
-
-    const int err = spatialdb_query((void*) _db, valsQ, numVals, queryLoc, spaceDim, (void*) &csCart);
-    REQUIRE(err == errFlags[0]);
-
-    const double tolerance = 1.0e-06;
-    for (size_t iVal = 0; iVal < numVals; ++iVal) {
-        const double toleranceV = fabs(vals[iVal]) * tolerance;
-        CHECK_THAT(valsQ[iVal], Catch::Matchers::WithinAbs(vals[iVal], toleranceV));
-    } // for
-
-    delete[] valsQ;valsQ = NULL;
-    _db->close();
-} // testDB_c
 
 
 // End of file

@@ -11,6 +11,7 @@
 
 #include "spatialdata/spatialdb/spatialdbfwd.hh"
 
+#include <memory> // HASA std::unique_ptr
 #include <cstddef> // USES size_t
 
 namespace spatialdata {
@@ -59,8 +60,8 @@ protected:
 
     // PROTECTED MEMBERS //////////////////////////////////////////////////////////////////////////
 
-    SimpleDB* _db; ///< Test subject
-    TestSimpleDB_Data* _data; ///< Data for tests.
+    std::unique_ptr<SimpleDB> _db; ///< Test subject
+    std::unique_ptr<TestSimpleDB_Data> _data; ///< Data for tests.
 
     // PRIVATE METHODS ////////////////////////////////////////////////////////////////////////////
 private:
@@ -94,6 +95,7 @@ public:
     size_t numValues;
     size_t dataDim;
     size_t numQueries;
+    const char* description;
 
     const double* dbCoordinates;
     const double* dbValues;

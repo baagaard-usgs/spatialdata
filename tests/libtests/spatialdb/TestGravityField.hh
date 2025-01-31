@@ -11,6 +11,7 @@
 
 #include "spatialdata/geocoords/geocoordsfwd.hh" // USES CoordSys
 
+#include <memory> // HASA std::shared_ptr
 #include <cstddef> // HASA size_t
 
 namespace spatialdata {
@@ -53,7 +54,7 @@ public:
     // PROTECTED METHODS //////////////////////////////////////////////////////////////////////////
 protected:
 
-    TestGravityField_Data* _data; ///< Test data.
+    std::unique_ptr<TestGravityField_Data> _data; ///< Test data.
 
 }; // class TestGravityField
 
@@ -71,7 +72,7 @@ public:
     // PUBLIC MEMBERS /////////////////////////////////////////////////////////////////////////////
 public:
 
-    spatialdata::geocoords::CoordSys* cs; ///< Coordinate system.
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs; ///< Coordinate system.
     double gravityAcc; ///< Gravitational acceleration.
     const double* gravityDir; ///< Direction of gravitational acceleration.
 

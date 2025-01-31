@@ -11,7 +11,7 @@
 import unittest
 
 from spatialdata.testing.TestCases import make_suite
-from spatialdata.utils.utils import SpatialdataVersion
+from spatialdata.utils._utils import SpatialdataVersion
 
 
 class TestSpatialdataVersion(unittest.TestCase):

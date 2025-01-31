@@ -33,6 +33,7 @@ libspatialdata_la_SOURCES = \
 	spatialdb/SpatialDB.cc \
 	spatialdb/UniformDB.cc \
 	spatialdb/CxxFunctionDB.cc \
+	spatialdb/SimpleGridDB.cc \
 	spatialdb/SimpleGridDBData.cc \
 	spatialdb/SimpleGridDBIO.cc \
 	spatialdb/SimpleGridDBQuery.cc \

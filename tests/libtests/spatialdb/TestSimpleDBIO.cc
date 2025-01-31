@@ -10,7 +10,7 @@
 
 #include <portinfo>
 
-#include "spatialdata/spatialdb/SimpleIOAscii.hh" // Test subject
+#include "spatialdata/spatialdb/SimpleDBIO.hh" // Test subject
 
 #include "spatialdata/spatialdb/SimpleDBData.hh" // USES SimpleDBData
 #include "spatialdata/geocoords/CSCart.hh" // USES CSCart
@@ -23,11 +23,11 @@
 // ----------------------------------------------------------------------
 namespace spatialdata {
     namespace spatialdb {
-        class TestSimpleIOAscii;
+        class TestSimpleDBIO;
     } // spatialdb
 } // spatialdata
 
-class spatialdata::spatialdb::TestSimpleIOAscii {
+class spatialdata::spatialdb::TestSimpleDBIO {
     // PUBLIC METHODS /////////////////////////////////////////////////////
 public:
 
@@ -40,63 +40,73 @@ public:
     static
     void testReadComments(void);
 
-}; // class TestSimpleIOAscii
+}; // class TestSimpleDBIO
 
 // ------------------------------------------------------------------------------------------------
-TEST_CASE("TestSimpleIOAscii::testWriteRead", "[TestSimpleIOAscii]") {
-    spatialdata::spatialdb::TestSimpleIOAscii::testWriteRead();
+TEST_CASE("TestSimpleDBIO::testWriteRead", "[TestSimpleDBIO]") {
+    spatialdata::spatialdb::TestSimpleDBIO::testWriteRead();
 }
-TEST_CASE("TestSimpleIOAscii::testReadComments", "[TestSimpleIOAscii]") {
-    spatialdata::spatialdb::TestSimpleIOAscii::testReadComments();
+TEST_CASE("TestSimpleDBIO::testReadComments", "[TestSimpleDBIO]") {
+    spatialdata::spatialdb::TestSimpleDBIO::testReadComments();
 }
 
 // ----------------------------------------------------------------------
 // Test filename(), write(), read().
 void
-spatialdata::spatialdb::TestSimpleIOAscii::testWriteRead(void) {
+spatialdata::spatialdb::TestSimpleDBIO::testWriteRead(void) {
     const size_t spaceDimE = 3;
     const size_t numLocsE = 5;
-    const size_t numValsE = 2;
+    const size_t numValuesE = 2;
     const size_t dataDimE = 3;
-    const char* names[numValsE] = { "One", "Two" };
-    const char* units[numValsE] = { "m", "m" };
-    const double coordsE[numLocsE*spaceDimE] = {
+    const std::vector<std::string> names({ "One", "Two" });
+    const std::vector<std::string> units({ "m", "m" });
+    const double coordinatesE[numLocsE*spaceDimE] = {
         0.6, 0.1, 0.2,
         1.0, 1.1, 1.2,
         4.7, 9.5, 8.7,
         3.4, 0.7, 9.8,
         3.4, 9.8, 5.7,
     };
-    const double dataE[numLocsE*numValsE] = {
+    const double dataE[numLocsE*numValuesE] = {
         6.6, 3.4,
         5.5, 6.7,
         2.3, 4.1,
         5.7, 2.0,
         6.3, 6.7,
     };
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());
 
     SimpleDBData dataOut;
-    dataOut.allocate(numLocsE, numValsE, spaceDimE, dataDimE);
-    dataOut.setData(dataE, numLocsE, numValsE);
-    dataOut.setCoordinates(coordsE, numLocsE, spaceDimE);
-    dataOut.setNames(names, numValsE);
-    dataOut.setUnits(units, numValsE);
+    dataOut.allocate(numLocsE, numValuesE, spaceDimE, dataDimE);
+    dataOut.setNames(names);
+    dataOut.setUnits(units);
+    dataOut.setCoordSys(cs);
+    for (size_t iLoc = 0, iData = 0, iCoords = 0; iLoc < numLocsE; ++iLoc) {
+        // data
+        double* const data = dataOut.getData(iLoc);
+        for (size_t iValue = 0; iValue < numValuesE; ++iValue) {
+            data[iValue] = dataE[iData++];
+        } // for
+
+        // coordinates
+        double* const coordinates = dataOut.getCoordinates(iLoc);
+        for (size_t iDim = 0; iDim < spaceDimE; ++iDim) {
+            coordinates[iDim] = coordinatesE[iCoords++];
+        } // for
+    } // for
 
     const char* filename = "spatialdb_ascii.dat";
-    geocoords::CSCart csOut;
-    SimpleIOAscii dbIO;
-    dbIO.setFilename(filename);
-    dbIO.write(dataOut, &csOut);
+    SimpleDBIO dbIO;
+    dbIO.write(dataOut, filename);
 
     SimpleDBData dataIn;
-    geocoords::CoordSys* csIn = NULL;
-    dbIO.read(&dataIn, &csIn);
+    dbIO.read(&dataIn, filename);
 
     CHECK(numLocsE == dataIn.getNumLocs());
     CHECK(dataDimE == dataIn.getDataDim());
     CHECK(spaceDimE == dataIn.getSpaceDim());
-    REQUIRE(numValsE == dataIn.getNumValues());
-    for (size_t iVal = 0; iVal < numValsE; ++iVal) {
+    REQUIRE(numValuesE == dataIn.getNumValues());
+    for (size_t iVal = 0; iVal < numValuesE; ++iVal) {
         CHECK(std::string(names[iVal]) == std::string(dataIn.getName(iVal)));
         CHECK(std::string(units[iVal]) == std::string(dataIn.getUnits(iVal)));
     } // for
@@ -105,20 +115,18 @@ spatialdata::spatialdb::TestSimpleIOAscii::testWriteRead(void) {
     for (size_t iLoc = 0, i = 0; iLoc < numLocsE; ++iLoc) {
         const double* coordinates = dataIn.getCoordinates(iLoc);
         for (size_t iDim = 0; iDim < spaceDimE; ++iDim, ++i) {
-            const double toleranceV = fabs(coordsE[i]) > 0.0 ? fabs(coordsE[i]) * tolerance : tolerance;
-            CHECK_THAT(coordinates[iDim], Catch::Matchers::WithinAbs(coordsE[i], toleranceV));
+            const double toleranceV = fabs(coordinatesE[i]) > 0.0 ? fabs(coordinatesE[i]) * tolerance : tolerance;
+            CHECK_THAT(coordinates[iDim], Catch::Matchers::WithinAbs(coordinatesE[i], toleranceV));
         } // for
     } // for
 
     for (size_t iLoc = 0, i = 0; iLoc < numLocsE; ++iLoc) {
         const double* values = dataIn.getData(iLoc);
-        for (size_t iVal = 0; iVal < numValsE; ++iVal, ++i) {
+        for (size_t iVal = 0; iVal < numValuesE; ++iVal, ++i) {
             const double toleranceV = fabs(dataE[i]) > 0.0 ? fabs(dataE[i]) * tolerance : tolerance;
             CHECK_THAT(values[iVal], Catch::Matchers::WithinAbs(dataE[i], toleranceV));
         } // for
     } // for
-
-    delete csIn;csIn = NULL;
 } // testWriteRead
 
 
@@ -126,21 +134,21 @@ spatialdata::spatialdb::TestSimpleIOAscii::testWriteRead(void) {
 // Test filename(), read() with spatial database file that contains
 // comments.
 void
-spatialdata::spatialdb::TestSimpleIOAscii::testReadComments(void) {
+spatialdata::spatialdb::TestSimpleDBIO::testReadComments(void) {
     const size_t spaceDimE = 3;
     const size_t numLocsE = 5;
-    const size_t numValsE = 2;
+    const size_t numValuesE = 2;
     const size_t dataDimE = 3;
-    const char* names[numValsE] = { "One", "Two" };
-    const char* units[numValsE] = { "m", "m" };
-    const double coordsE[numLocsE*spaceDimE] = {
+    const char* names[numValuesE] = { "One", "Two" };
+    const char* units[numValuesE] = { "m", "m" };
+    const double coordinatesE[numLocsE*spaceDimE] = {
         0.6, 0.1, 0.2,
         1.0, 1.1, 1.2,
         4.7, 9.5, 8.7,
         3.4, 0.7, 9.8,
         3.4, 9.8, 5.7,
     };
-    const double dataE[numLocsE*numValsE] = {
+    const double dataE[numLocsE*numValuesE] = {
         6.6, 3.4,
         5.5, 6.7,
         2.3, 4.1,
@@ -149,18 +157,15 @@ spatialdata::spatialdb::TestSimpleIOAscii::testReadComments(void) {
     };
 
     const char* filename = "data/spatial_comments.dat";
-    SimpleIOAscii dbIO;
-    dbIO.setFilename(filename);
-
+    SimpleDBIO dbIO;
     SimpleDBData dataIn;
-    geocoords::CoordSys* csIn = NULL;
-    dbIO.read(&dataIn, &csIn);
+    dbIO.read(&dataIn, filename);
 
     CHECK(numLocsE == dataIn.getNumLocs());
-    CHECK(numValsE == dataIn.getNumValues());
+    CHECK(numValuesE == dataIn.getNumValues());
     CHECK(dataDimE == dataIn.getDataDim());
     CHECK(spaceDimE == dataIn.getSpaceDim());
-    for (size_t iVal = 0; iVal < numValsE; ++iVal) {
+    for (size_t iVal = 0; iVal < numValuesE; ++iVal) {
         CHECK(std::string(names[iVal]) == std::string(dataIn.getName(iVal)));
         CHECK(std::string(units[iVal]) == std::string(dataIn.getUnits(iVal)));
     } // for
@@ -169,20 +174,18 @@ spatialdata::spatialdb::TestSimpleIOAscii::testReadComments(void) {
     for (size_t iLoc = 0, i = 0; iLoc < numLocsE; ++iLoc) {
         const double* coordinates = dataIn.getCoordinates(iLoc);
         for (size_t iDim = 0; iDim < spaceDimE; ++iDim, ++i) {
-            const double toleranceV = fabs(coordsE[i]) > 0.0 ? fabs(coordsE[i]) * tolerance : tolerance;
-            CHECK_THAT(coordinates[iDim], Catch::Matchers::WithinAbs(coordsE[i], toleranceV));
+            const double toleranceV = fabs(coordinatesE[i]) > 0.0 ? fabs(coordinatesE[i]) * tolerance : tolerance;
+            CHECK_THAT(coordinates[iDim], Catch::Matchers::WithinAbs(coordinatesE[i], toleranceV));
         } // for
     } // for
 
     for (size_t iLoc = 0, i = 0; iLoc < numLocsE; ++iLoc) {
         const double* values = dataIn.getData(iLoc);
-        for (size_t iVal = 0; iVal < numValsE; ++iVal, ++i) {
+        for (size_t iVal = 0; iVal < numValuesE; ++iVal, ++i) {
             const double toleranceV = fabs(dataE[i]) > 0.0 ? fabs(dataE[i]) * tolerance : tolerance;
             CHECK_THAT(values[iVal], Catch::Matchers::WithinAbs(dataE[i], toleranceV));
         } // for
     } // for
-
-    delete csIn;csIn = NULL;
 } // testReadComments
 
 

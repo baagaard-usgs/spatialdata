@@ -24,7 +24,7 @@
 namespace spatialdata {
     namespace spatialdb {
         class TestAnalyticDB;
-    } // spatialdb
+    }
 } // spatialdata
 
 class spatialdata::spatialdb::TestAnalyticDB {
@@ -49,7 +49,7 @@ public:
 
     /// Test setQueryValues()
     static
-    void testQueryVals(void);
+    void testQueryValues(void);
 
     /// Test query()
     static
@@ -74,8 +74,8 @@ TEST_CASE("TestAnalyticDB::testSetData", "[TestAnalyticDB]") {
 TEST_CASE("TestAnalyticDB::testGetNamesDBValues", "[TestAnalyticDB]") {
     spatialdata::spatialdb::TestAnalyticDB::testGetNamesDBValues();
 }
-TEST_CASE("TestAnalyticDB::testQueryVals", "[TestAnalyticDB]") {
-    spatialdata::spatialdb::TestAnalyticDB::testQueryVals();
+TEST_CASE("TestAnalyticDB::testQueryValues", "[TestAnalyticDB]") {
+    spatialdata::spatialdb::TestAnalyticDB::testQueryValues();
 }
 TEST_CASE("TestAnalyticDB::testQuery", "[TestAnalyticDB]") {
     spatialdata::spatialdb::TestAnalyticDB::testQuery();
@@ -88,11 +88,10 @@ TEST_CASE("TestAnalyticDB::testQueryUTM", "[TestAnalyticDB]") {
 // Test constructor.
 void
 spatialdata::spatialdb::TestAnalyticDB::testConstructors(void) {
-    AnalyticDB db;
+    const std::string& description = "TestAnalyticDB::testConstructors";
 
-    const std::string description("database A");
-    AnalyticDB dbL(description.c_str());
-    CHECK(description == std::string(dbL.getDescription()));
+    AnalyticDB db(description.c_str());
+    CHECK(description == std::string(db.getDescription()));
 } // testConstructors
 
 
@@ -100,10 +99,9 @@ spatialdata::spatialdb::TestAnalyticDB::testConstructors(void) {
 // Test accessors().
 void
 spatialdata::spatialdb::TestAnalyticDB::testAccessors(void) {
-    const std::string description("database 2");
+    const std::string& description = "TestAnalyticDB::testAccessors";
 
-    AnalyticDB db;
-    db.setDescription(description.c_str());
+    AnalyticDB db(description.c_str());
     CHECK(description == std::string(db.getDescription()));
 } // testAccessors
 
@@ -112,25 +110,33 @@ spatialdata::spatialdb::TestAnalyticDB::testAccessors(void) {
 // Test setData().
 void
 spatialdata::spatialdb::TestAnalyticDB::testSetData(void) {
-    AnalyticDB db;
+    AnalyticDB db("TestAnalyticDB::testSetData");
 
     const size_t numValuesE = 3;
-    const char* names[numValuesE] = { "one", "two", "three" };
-    const char* units[numValuesE] = { "m", "km", "cm" };
-    const char* expressions[numValuesE] = { "x^2 + y^2", "x/z", "x + y + z" };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "m", "km", "cm" });
+    const std::vector<std::string> expressions({ "x^2 + y^2", "x/z", "x + y + z" });
 
-    db.setData(names, units, expressions, numValuesE);
+    db.setData(names, units, expressions);
 
-    REQUIRE(numValuesE == db._numValues);
+    REQUIRE(numValuesE == db._names.size());
     for (size_t i = 0; i < numValuesE; ++i) {
         CHECK(std::string(names[i]) == db._names[i]);
     } // for
 
+    REQUIRE(numValuesE == db._scales.size());
+    const std::vector<double> scalesE({1.0, 1000.0, 0.01});
+    const double tolerance = 1.0e-6;
+    for (size_t i = 0; i < numValuesE; ++i) {
+        CHECK_THAT(scalesE[i]/db._scales[i], Catch::Matchers::WithinAbs(1.0, tolerance));
+    } // for
+
+    REQUIRE(numValuesE == db._expressions.size());
     for (size_t i = 0; i < numValuesE; ++i) {
         CHECK(std::string(expressions[i]) == db._expressions[i]);
     } // for
 
-    CHECK(numValuesE == db._querySize);
+    CHECK(numValuesE == db._queryIndices.size());
 } // testSetData
 
 
@@ -139,56 +145,51 @@ spatialdata::spatialdb::TestAnalyticDB::testSetData(void) {
 void
 spatialdata::spatialdb::TestAnalyticDB::testGetNamesDBValues(void) {
     const size_t numValuesE = 3;
-    const char* names[numValuesE] = { "one", "two", "three" };
-    const char* units[numValuesE] = { "none", "none", "none" };
-    const char* expressions[numValuesE] = { "x^2 + y^2", "x/z", "x + y + z" };
+    const std::vector<std::string> namesE({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "none", "none" });
+    const std::vector<std::string> expressions({ "x^2 + y^2", "x/z", "x + y + z" });
 
-    AnalyticDB db;
-    db.setData(names, units, expressions, numValuesE);
+    AnalyticDB db("TestAnalyticDB::testGetNamesDBValues");
+    db.setData(namesE, units, expressions);
 
-    const char** valueNames = NULL;
-    size_t numValues = 0;
-    db.getNamesDBValues(&valueNames, &numValues);
-    REQUIRE(numValuesE == numValues);
+    const std::vector<std::string>& names = db.getNamesDBValues();
+    REQUIRE(numValuesE == names.size());
 
     for (size_t i = 0; i < numValuesE; ++i) {
-        CHECK(std::string(names[i]) == std::string(valueNames[i]));
+        CHECK(std::string(namesE[i]) == std::string(names[i]));
     } // for
-    delete[] valueNames;valueNames = NULL;
-    numValues = 0;
 } // testGetNamesDBValues
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues().
 void
-spatialdata::spatialdb::TestAnalyticDB::testQueryVals(void) {
-    AnalyticDB db;
+spatialdata::spatialdb::TestAnalyticDB::testQueryValues(void) {
+    AnalyticDB db("TestAnalyticDB::testQueryValues");
 
-    const size_t numValuesE = 3;
-    const char* names[numValuesE] = { "one", "two", "three" };
-    const char* units[numValuesE] = { "none", "none", "none" };
-    const char* expressions[numValuesE] = { "x^2 + y^2", "x/z", "x + y + z" };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "none", "none" });
+    const std::vector<std::string> expressions({ "x^2 + y^2", "x/z", "x + y + z" });
 
+    const std::vector<std::string> queryNames({ "three", "two" });
     const size_t querySize = 2;
-    const char* queryNames[querySize] = { "three", "two" };
     const size_t queryVals[querySize] = { 2, 1 };
 
-    db.setData(names, units, expressions, numValuesE);
-    db.setQueryValues(queryNames, querySize);
+    db.setData(names, units, expressions);
+    db.setQueryValues(queryNames);
 
-    REQUIRE(querySize == db._querySize);
+    REQUIRE(querySize == db._queryIndices.size());
     for (size_t i = 0; i < querySize; ++i) {
-        CHECK(queryVals[i] == db._queryValues[i]);
+        CHECK(queryVals[i] == db._queryIndices[i]);
     } // for
-} // testQueryVals
+} // testQueryValues
 
 
 // ----------------------------------------------------------------------
 // Test query().
 void
 spatialdata::spatialdb::TestAnalyticDB::testQuery(void) {
-    AnalyticDB db;
+    AnalyticDB db("TestAnalyticDB::testQuery");
 
     const size_t spaceDim = 3;
     spatialdata::geocoords::CSCart cs;
@@ -196,9 +197,9 @@ spatialdata::spatialdb::TestAnalyticDB::testQuery(void) {
     const double coords[spaceDim] = { 1.1, 2.3, 5.6 };
 
     const size_t numValues = 3;
-    const char* names[numValues] = { "one", "two", "three" };
-    const char* units[numValues] = { "none", "km", "cm" };
-    const char* expressions[numValues] = { "x^2 + y^2", "x/z", "x + y + z" };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "km", "cm" });
+    const std::vector<std::string> expressions({ "x^2 + y^2", "x/z", "x + y + z" });
     const double scales[numValues] = { 1.0, 1000.0, 0.01 };
     const double values[numValues] = {
         coords[0]*coords[0],
@@ -206,15 +207,15 @@ spatialdata::spatialdb::TestAnalyticDB::testQuery(void) {
         coords[0]+coords[1]+coords[2],
     };
 
+    const std::vector<std::string> queryNames({ "three", "two" });
     const size_t querySize = 2;
-    const char* queryNames[querySize] = { "three", "two" };
     const size_t queryVals[querySize] = { 2, 1 };
 
-    db.setData(names, units, expressions, numValues);
-    db.setQueryValues(queryNames, querySize);
+    db.setData(names, units, expressions);
+    db.setQueryValues(queryNames);
 
     double data[querySize];
-    db.query(data, querySize, coords, spaceDim, &cs);
+    db.query(data, querySize, coords, &cs);
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {
@@ -230,7 +231,7 @@ spatialdata::spatialdb::TestAnalyticDB::testQuery(void) {
 // Test query() with WGS84 -> UTM.
 void
 spatialdata::spatialdb::TestAnalyticDB::testQueryUTM(void) {
-    AnalyticDB db;
+    AnalyticDB db("TestAnalyticDB::testQueryUTM");
     const size_t spaceDim = 3;
 
     spatialdata::geocoords::CSGeo csWGS84;
@@ -238,15 +239,15 @@ spatialdata::spatialdb::TestAnalyticDB::testQueryUTM(void) {
     csWGS84.setSpaceDim(spaceDim);
     const double coordsLL[spaceDim] = { 37.50, -122.30, 5.6 };
 
-    spatialdata::geocoords::CSGeo csUTM;
-    csUTM.setString("EPSG:32610");
-    csUTM.setSpaceDim(spaceDim);
+    std::shared_ptr<spatialdata::geocoords::CSGeo> csUTM(new spatialdata::geocoords::CSGeo());assert(csUTM);
+    csUTM->setString("EPSG:32610");
+    csUTM->setSpaceDim(spaceDim);
     const double coordsUTM[spaceDim] = { 561873.454241, 4150571.437855, 5.6 };
 
     const size_t numValues = 3;
-    const char* names[numValues] = { "one", "two", "three" };
-    const char* units[numValues] = { "none", "km", "cm" };
-    const char* expressions[numValues] = { "x^2 + y^2", "x/z", "x + y + z" };
+    const std::vector<std::string> names({ "one", "two", "three" });
+    const std::vector<std::string> units({ "none", "km", "cm" });
+    const std::vector<std::string> expressions({ "x^2 + y^2", "x/z", "x + y + z" });
     const double scales[numValues] = { 1.0, 1000.0, 0.01 };
     const double values[numValues] = {
         coordsUTM[0]*coordsUTM[0],
@@ -255,15 +256,15 @@ spatialdata::spatialdb::TestAnalyticDB::testQueryUTM(void) {
     };
 
     const size_t querySize = 2;
-    const char* queryNames[querySize] = { "three", "two" };
+    const std::vector<std::string> queryNames({ "three", "two" });
     const size_t queryVals[querySize] = { 2, 1 };
 
     db.setCoordSys(csUTM);
-    db.setData(names, units, expressions, numValues);
-    db.setQueryValues(queryNames, querySize);
+    db.setData(names, units, expressions);
+    db.setQueryValues(queryNames);
 
     double data[querySize];
-    db.query(data, querySize, coordsLL, spaceDim, &csWGS84);
+    db.query(data, querySize, coordsLL, &csWGS84);
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {

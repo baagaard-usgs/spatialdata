@@ -59,14 +59,11 @@ public:
      * @param numValues Number of values expected (size of values array)
      * @param coordinates Coordinates of point for query
      * @param csCoordinates Coordinate system of coordinates
-     *
-     * @returns 0 on success, 1 on failure (i.e., could not interpolate
-     *   so values set to 0)
      */
-    int query(double* values,
-              const size_t numValues,
-              const double* coordinates,
-              const spatialdata::geocoords::CoordSys* csCoordinates);
+    void query(double* values,
+               const size_t numValues,
+               const double* coordinates,
+               const spatialdata::geocoords::CoordSys* csCoordinates);
 
     // PRIVATE METHODS //////////////////////////////////////////////////////
 private:

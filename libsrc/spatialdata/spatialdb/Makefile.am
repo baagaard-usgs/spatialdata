@@ -31,7 +31,7 @@ subpkginclude_HEADERS = \
 	SimpleGridDB.hh \
 	SimpleGridDBData.hh \
 	SimpleGridDBData.icc \
-	SimpleGridDBuery.hh \
+	SimpleGridDBQuery.hh \
 	SimpleGridDBIO.hh \
 	CompositeDB.hh \
 	Utilities.hh \

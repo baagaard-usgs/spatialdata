@@ -44,30 +44,31 @@ public:
     /// Test getNamesDBValues().
     void testGetNamesDBValues(void);
 
-    /// Test setQueryValues() with values in dbA and dbB.
-    void testQueryValsAB(void);
+    /// Test setQueryValues() with values in two databases.
+    void testQueryValuesAB(void);
 
-    /// Test setQueryValues() with values in dbA
-    void testQueryValsA(void);
+    /// Test setQueryValues() with values in first database
+    void testQueryValuesA(void);
 
-    /// Test setQueryValues() with values in dbB.
-    void testQueryValsB(void);
+    /// Test setQueryValues() with values in second dataset.
+    void testQueryValuesB(void);
 
-    /// Test query() with values in both dbA and dbB.
+    /// Test query() with values in both databases.
     void testQueryAB(void);
 
-    /// Test query() with values in dbA.
+    /// Test query() with values in first database.
     void testQueryA(void);
 
-    /// Test query() with values in dbB.
+    /// Test query() with values in second database.
     void testQueryB(void);
 
 private:
 
-    UniformDB _dbA; ///< Spatial database A.
-    UniformDB _dbB; ///< Spatial databsae B.
+    std::shared_ptr<SpatialDB> _dbA; ///< Spatial database A.
+    std::shared_ptr<SpatialDB> _dbB; ///< Spatial database B.
 
 }; // class TestCompositeDB
+
 // ------------------------------------------------------------------------------------------------
 TEST_CASE("TestCompositeDB::testConstructors", "[TestCompositeDB]") {
     spatialdata::spatialdb::TestCompositeDB::testConstructors();
@@ -79,14 +80,14 @@ TEST_CASE("TestCompositeDB::testAccessors", "[TestCompositeDB]") {
 TEST_CASE("TestCompositeDB::testGetNamesDBValues", "[TestCompositeDB]") {
     spatialdata::spatialdb::TestCompositeDB().testGetNamesDBValues();
 }
-TEST_CASE("TestCompositeDB::testQueryValsAB", "[TestCompositeDB]") {
-    spatialdata::spatialdb::TestCompositeDB().testQueryValsAB();
+TEST_CASE("TestCompositeDB::testQueryValuesAB", "[TestCompositeDB]") {
+    spatialdata::spatialdb::TestCompositeDB().testQueryValuesAB();
 }
-TEST_CASE("TestCompositeDB::testQueryValsA", "[TestCompositeDB]") {
-    spatialdata::spatialdb::TestCompositeDB().testQueryValsA();
+TEST_CASE("TestCompositeDB::testQueryValuesA", "[TestCompositeDB]") {
+    spatialdata::spatialdb::TestCompositeDB().testQueryValuesA();
 }
-TEST_CASE("TestCompositeDB::testQueryValsB", "[TestCompositeDB]") {
-    spatialdata::spatialdb::TestCompositeDB().testQueryValsB();
+TEST_CASE("TestCompositeDB::testQueryValuesB", "[TestCompositeDB]") {
+    spatialdata::spatialdb::TestCompositeDB().testQueryValuesB();
 }
 TEST_CASE("TestCompositeDB::testQueryAB", "[TestCompositeDB]") {
     spatialdata::spatialdb::TestCompositeDB().testQueryAB();
@@ -101,33 +102,33 @@ TEST_CASE("TestCompositeDB::testQueryB", "[TestCompositeDB]") {
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestCompositeDB::TestCompositeDB(void) {
     { // initialize db A
-        const size_t numValues = 3;
-        const char* names[3] = { "one", "two", "three" };
-        const char* units[3] = { "none", "none", "none" };
-        const double values[3] = { 1.1, 2.2, 3.3 };
-        _dbA.setData(names, units, values, numValues);
+        std::shared_ptr<UniformDB> db(new UniformDB("dbA"));REQUIRE(db);
+        const std::vector<std::string> names({ "one", "two", "three" });
+        const std::vector<std::string> units({ "none", "none", "none" });
+        const std::vector<double> values({ 1.1, 2.2, 3.3 });
+        db->setData(names, units, values);
+        _dbA = db;
     } // initialize db A
 
     { // initialize db B
-        const size_t numValues = 2;
-        const char* names[2] = { "four", "five" };
-        const char* units[2] = { "none", "none" };
-        const double values[2] = { 4.4, 5.5 };
-        _dbB.setData(names, units, values, numValues);
+        std::shared_ptr<UniformDB> db(new UniformDB("dbA"));REQUIRE(db);
+        const std::vector<std::string> names({ "four", "five" });
+        const std::vector<std::string> units({ "none", "none" });
+        const std::vector<double> values({ 4.4, 5.5 });
+        db->setData(names, units, values);
+        _dbB = db;
     } // initialize db B
 
-} // setUp
+} // constructor
 
 
 // ----------------------------------------------------------------------
 // Test constructors.
 void
 spatialdata::spatialdb::TestCompositeDB::testConstructors(void) {
-    CompositeDB db;
-
-    const std::string description("database A");
-    CompositeDB db2(description.c_str());
-    CHECK(description == std::string(db2.getDescription()));
+    const std::string& description = "database A";
+    CompositeDB db(description.c_str());
+    CHECK(description == std::string(db.getDescription()));
 } // testConstructors
 
 
@@ -135,44 +136,20 @@ spatialdata::spatialdb::TestCompositeDB::testConstructors(void) {
 // Test accessors.
 void
 spatialdata::spatialdb::TestCompositeDB::testAccessors(void) {
-    const std::string label("database 2");
+    const std::string& description = "testAccessors";
 
-    CompositeDB db;
-    db.setDescription(label.c_str());
-    CHECK(label == std::string(db.getDescription()));
+    CompositeDB db(description.c_str());
+    CHECK(description == std::string(db.getDescription()));
 
     // Set database A
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
-
-    CHECK(db._dbA);
-    CHECK(db._infoA);
-    CHECK(!db._infoA->query_buffer);
-    CHECK(!db._infoA->query_indices);
-    CHECK(!db._infoA->query_size);
-    REQUIRE(numNamesA == db._infoA->num_names);
-    for (size_t i = 0; i < numNamesA; ++i) {
-        CHECK(std::string(namesA[i]) == db._infoA->names_values[i]);
-    } // for
-
-    CHECK(!db._dbB);
-    CHECK(!db._infoB);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
+    CHECK(1 == db._dbs.size());
 
     // Set database B
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
-
-    CHECK(db._dbB);
-    CHECK(db._infoB);
-    CHECK(!db._infoB->query_buffer);
-    CHECK(!db._infoB->query_indices);
-    CHECK(!db._infoB->query_size);
-    REQUIRE(numNamesB == db._infoB->num_names);
-    for (size_t i = 0; i < numNamesB; ++i) {
-        CHECK(std::string(namesB[i]) == db._infoB->names_values[i]);
-    } // for
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
+    CHECK(2 == db._dbs.size());
 } // testAccessors
 
 
@@ -180,218 +157,176 @@ spatialdata::spatialdb::TestCompositeDB::testAccessors(void) {
 // Test getNamesDBValues().
 void
 spatialdata::spatialdb::TestCompositeDB::testGetNamesDBValues(void) {
-    CompositeDB db;
+    CompositeDB db("testGetNamesDBValues");
 
-    const size_t numValuesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numValuesA);
+    // Set database A
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numValuesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numValuesB);
+    // Set database B
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
-    const char** valueNames = NULL;
-    size_t numValues = 0;
-    db.getNamesDBValues(&valueNames, &numValues);
-    REQUIRE(numValuesA + numValuesB == numValues);
+    const std::vector<std::string>& namesDB = db.getNamesDBValues();
+    REQUIRE(namesDB.size() == namesA.size() + namesB.size());
 
     size_t iAB = 0;
-    for (size_t iA = 0; iA < numValuesA; ++iA, ++iAB) {
-        CHECK(std::string(namesA[iA]) == std::string(valueNames[iAB]));
+    for (size_t iA = 0; iA < namesA.size(); ++iA, ++iAB) {
+        CHECK(namesA[iA] == namesDB[iAB]);
     } // for
-    for (size_t iB = 0; iB < numValuesB; ++iB, ++iAB) {
-        CHECK(std::string(namesB[iB]) == std::string(valueNames[iAB]));
+    for (size_t iB = 0; iB < namesB.size(); ++iB, ++iAB) {
+        CHECK(namesB[iB] == namesDB[iAB]);
     } // for
-    delete[] valueNames;valueNames = NULL;
-    numValues = 0;
 } // testGetDBValues
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues() with values in dbA and dbB.
 void
-spatialdata::spatialdb::TestCompositeDB::testQueryValsAB(void) {
-    CompositeDB db;
+spatialdata::spatialdb::TestCompositeDB::testQueryValuesAB(void) {
+    CompositeDB db("testQueryValuesAB");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
-
-    const size_t querySize = 3;
-    const char* queryVals[3] = { "one", "five", "three" };
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
     db.open();
 
     { // Check defaults (all values in A and then all values in B).
-        const size_t qsizeA = 2;
-        const size_t qindicesA[qsizeA] = { 0, 1 };
-        CHECK(db._dbA);
-        CHECK(db._infoA);
-        CHECK(db._infoA->query_buffer);
-        CHECK(db._infoA->query_indices);
-        REQUIRE(qsizeA == db._infoA->query_size);
-        for (size_t i = 0; i < qsizeA; ++i) {
-            CHECK(qindicesA[i] == db._infoA->query_indices[i]);
-        } // for
+        const std::vector<std::string> namesE({"three", "one", "five"});
+        REQUIRE(namesE == db.getNamesDBValues());
+    } // Check defaults
 
-        const size_t qsizeB = 1;
-        const size_t qindicesB[1] = { 2 };
-        CHECK(db._dbB);
-        CHECK(db._infoB);
-        CHECK(db._infoB->query_buffer);
-        CHECK(db._infoB->query_indices);
-        REQUIRE(qsizeB == db._infoB->query_size);
-        for (size_t i = 0; i < qsizeB; ++i) {
-            CHECK(qindicesB[i] == db._infoB->query_indices[i]);
-        } // for
-    } // check defaults
-
-    db.setQueryValues(queryVals, querySize);
+    const std::vector<std::string> queryValues({ "one", "five", "three" });
+    db.setQueryValues(queryValues);
     db.close();
 
-    const size_t qsizeA = 2;
-    const size_t qindicesA[2] = { 0, 2 };
-    CHECK(db._dbA);
-    CHECK(db._infoA);
-    CHECK(db._infoA->query_buffer);
-    CHECK(db._infoA->query_indices);
-    REQUIRE(qsizeA == db._infoA->query_size);
-    for (size_t i = 0; i < qsizeA; ++i) {
-        CHECK(qindicesA[i] == db._infoA->query_indices[i]);
-    } // for
-
-    const size_t qsizeB = 1;
-    const size_t qindicesB[1] = { 1 };
-    CHECK(db._dbB);
-    CHECK(db._infoB);
-    CHECK(db._infoB->query_buffer);
-    CHECK(db._infoB->query_indices);
-    REQUIRE(qsizeB == db._infoB->query_size);
-    for (size_t i = 0; i < qsizeB; ++i) {
-        CHECK(qindicesB[i] == db._infoB->query_indices[i]);
-    } // for
-} // testQueryValsAB
+    { // Check values
+        const size_t querySizes[2] = {2, 1};
+        const size_t queryIndices[3] = {
+            0, 2, // dbA
+            1, // dbB
+        };
+        size_t indicesIndex = 0;
+        size_t sizeIndex = 0;
+        for (const CompositeDB::DBEntry& entry : db._dbs) {
+            const size_t querySizeDB = entry.queryIndices.size();
+            REQUIRE(querySizes[sizeIndex++] == querySizeDB);
+            for (size_t iQuery = 0; iQuery < querySizeDB; ++iQuery) {
+                CHECK(queryIndices[indicesIndex++] == entry.queryIndices[iQuery]);
+            } // for
+        } // for
+    } // Check values
+} // testQueryValuesAB
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues() with values in dbA.
 void
-spatialdata::spatialdb::TestCompositeDB::testQueryValsA(void) {
-    CompositeDB db;
+spatialdata::spatialdb::TestCompositeDB::testQueryValuesA(void) {
+    CompositeDB db("testQueryValuesA");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
-
-    const size_t querySize = 2;
-    const char* queryVals[2] = { "one", "three" };
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
     db.open();
-    db.setQueryValues(queryVals, querySize);
+
+    const std::vector<std::string> queryValues({ "one", "three" });
+    db.setQueryValues(queryValues);
     db.close();
 
-    const size_t qsizeA = 2;
-    const size_t qindicesA[2] = { 0, 1 };
-    CHECK(db._dbA);
-    CHECK(db._infoA);
-    CHECK(db._infoA->query_buffer);
-    CHECK(db._infoA->query_indices);
-    REQUIRE(qsizeA == db._infoA->query_size);
-    for (size_t i = 0; i < qsizeA; ++i) {
-        CHECK(qindicesA[i] == db._infoA->query_indices[i]);
-    } // for
-
-    const size_t qsizeB = 0;
-    CHECK(db._dbB);
-    CHECK(db._infoB);
-    CHECK(!db._infoB->query_buffer);
-    CHECK(!db._infoB->query_indices);
-    CHECK(qsizeB == db._infoB->query_size);
-} // testQueryValsA
+    { // Check values
+        const size_t querySizes[2] = {2, 0};
+        const size_t queryIndices[2] = {
+            0, 1, // dbA
+        };
+        size_t indicesIndex = 0;
+        size_t sizeIndex = 0;
+        for (const CompositeDB::DBEntry& entry : db._dbs) {
+            const size_t querySizeDB = entry.queryIndices.size();
+            REQUIRE(querySizes[sizeIndex++] == querySizeDB);
+            for (size_t iQuery = 0; iQuery < querySizeDB; ++iQuery) {
+                CHECK(queryIndices[indicesIndex++] == entry.queryIndices[iQuery]);
+            } // for
+        } // for
+    } // Check values
+} // testQueryValuesA
 
 
 // ----------------------------------------------------------------------
 // Test setQueryValues() with values in dbB.
 void
-spatialdata::spatialdb::TestCompositeDB::testQueryValsB(void) {
-    CompositeDB db;
+spatialdata::spatialdb::TestCompositeDB::testQueryValuesB(void) {
+    CompositeDB db("testQueryValuesB");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
-
-    const size_t querySize = 1;
-    const char* queryVals[1] = { "five" };
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
     db.open();
-    db.setQueryValues(queryVals, querySize);
+
+    const std::vector<std::string> queryValues({ "five" });
+    db.setQueryValues(queryValues);
     db.close();
 
-    const size_t qsizeA = 0;
-    CHECK(db._dbA);
-    CHECK(db._infoA);
-    CHECK(!db._infoA->query_buffer);
-    CHECK(!db._infoA->query_indices);
-    REQUIRE(qsizeA == db._infoA->query_size);
-
-    const size_t qsizeB = 1;
-    const size_t qindicesB[1] = { 0 };
-    CHECK(db._dbB);
-    CHECK(db._infoB);
-    CHECK(db._infoB->query_buffer);
-    CHECK(db._infoB->query_indices);
-    REQUIRE(qsizeB == db._infoB->query_size);
-    for (size_t i = 0; i < qsizeB; ++i) {
-        CHECK(qindicesB[i] == db._infoB->query_indices[i]);
-    } // for
-} // testQueryValsB
+    { // Check values
+        const size_t querySizes[2] = {0, 1};
+        const size_t queryIndices[1] = {
+            0, // dbB
+        };
+        size_t indicesIndex = 0;
+        size_t sizeIndex = 0;
+        for (const CompositeDB::DBEntry& entry : db._dbs) {
+            const size_t querySizeDB = entry.queryIndices.size();
+            REQUIRE(querySizes[sizeIndex++] == querySizeDB);
+            for (size_t iQuery = 0; iQuery < querySizeDB; ++iQuery) {
+                CHECK(queryIndices[indicesIndex++] == entry.queryIndices[iQuery]);
+            } // for
+        } // for
+    } // Check values
+} // testQueryValuesB
 
 
 // ----------------------------------------------------------------------
 // Test query() with values in both dbA and dbB.
 void
 spatialdata::spatialdb::TestCompositeDB::testQueryAB(void) {
-    CompositeDB db;
+    CompositeDB db("testQueryValuesB");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
-    const size_t querySize = 2;
-    const char* queryVals[2] = { "five", "one" };
+    db.open();
+
+    const std::vector<std::string> queryValues({ "five", "one" });
+    const size_t querySize = queryValues.size();
 
     const size_t spaceDim = 2;
     spatialdata::geocoords::CSCart cs;
     cs.setSpaceDim(spaceDim);
-    const double coords[2] = { 2.3, 5.6 };
-    double data[querySize];
-    const double valsE[2] = { 5.5, 1.1 };
+    const double coordinates[2] = { 2.3, 5.6 };
+    std::vector<double> values(querySize);
+    const double valuesE[2] = { 5.5, 1.1 };
 
     db.open();
-    db.setQueryValues(queryVals, querySize);
-    db.query(data, querySize, coords, spaceDim, &cs);
+    db.setQueryValues(queryValues);
+    db.query(values.data(), querySize, coordinates, &cs);
     db.close();
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {
-        const double toleranceV = fabs(valsE[i]) > 0.0 ? tolerance*valsE[i] : tolerance;
-        CHECK_THAT(data[i], Catch::Matchers::WithinAbs(valsE[i], toleranceV));
+        const double toleranceV = fabs(valuesE[i]) > 0.0 ? tolerance*valuesE[i] : tolerance;
+        CHECK_THAT(values[i], Catch::Matchers::WithinAbs(valuesE[i], toleranceV));
     } // for
 } // testQueryAB
 
@@ -400,35 +335,35 @@ spatialdata::spatialdb::TestCompositeDB::testQueryAB(void) {
 // Test query() with values in dbA.
 void
 spatialdata::spatialdb::TestCompositeDB::testQueryA(void) { // testQueryA
-    CompositeDB db;
+    CompositeDB db("testQueryValuesB");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
-    const size_t querySize = 1;
-    const char* queryVals[1] = { "three" };
+    db.open();
+
+    const std::vector<std::string> queryValues({ "three" });
+    const size_t querySize = queryValues.size();
 
     const size_t spaceDim = 2;
     spatialdata::geocoords::CSCart cs;
     cs.setSpaceDim(spaceDim);
-    const double coords[2] = { 2.3, 5.6 };
-    double data[querySize];
-    const double valsE[1] = { 3.3 };
+    const double coordinates[2] = { 2.3, 5.6 };
+    std::vector<double> values(querySize);
+    const double valuesE[2] = { 3.3 };
 
     db.open();
-    db.setQueryValues(queryVals, querySize);
-    db.query(data, querySize, coords, spaceDim, &cs);
+    db.setQueryValues(queryValues);
+    db.query(values.data(), querySize, coordinates, &cs);
     db.close();
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {
-        const double toleranceV = fabs(valsE[i]) > 0.0 ? tolerance*valsE[i] : tolerance;
-        CHECK_THAT(data[i], Catch::Matchers::WithinAbs(valsE[i], toleranceV));
+        const double toleranceV = fabs(valuesE[i]) > 0.0 ? tolerance*valuesE[i] : tolerance;
+        CHECK_THAT(values[i], Catch::Matchers::WithinAbs(valuesE[i], toleranceV));
     } // for
 } // testQueryA
 
@@ -437,35 +372,35 @@ spatialdata::spatialdb::TestCompositeDB::testQueryA(void) { // testQueryA
 // Test query().
 void
 spatialdata::spatialdb::TestCompositeDB::testQueryB(void) {
-    CompositeDB db;
+    CompositeDB db("testQueryValuesB");
 
-    const size_t numNamesA = 2;
-    const char* namesA[2] = { "three", "one" };
-    db.setDBA(&_dbA, namesA, numNamesA);
+    const std::vector<std::string> namesA({ "three", "one" });
+    db.addDB(_dbA, namesA);
 
-    const size_t numNamesB = 1;
-    const char* namesB[1] = { "five" };
-    db.setDBB(&_dbB, namesB, numNamesB);
+    const std::vector<std::string> namesB({ "five" });
+    db.addDB(_dbB, namesB);
 
-    const size_t querySize = 1;
-    const char* queryVals[1] = { "five", };
+    db.open();
+
+    const std::vector<std::string> queryValues({ "five" });
+    const size_t querySize = queryValues.size();
 
     const size_t spaceDim = 2;
     spatialdata::geocoords::CSCart cs;
     cs.setSpaceDim(spaceDim);
-    const double coords[2] = { 2.3, 5.6 };
-    double data[querySize];
-    const double valsE[1] = { 5.5 };
+    const double coordinates[2] = { 2.3, 5.6 };
+    std::vector<double> values(querySize);
+    const double valuesE[2] = { 5.5 };
 
     db.open();
-    db.setQueryValues(queryVals, querySize);
-    db.query(data, querySize, coords, spaceDim, &cs);
+    db.setQueryValues(queryValues);
+    db.query(values.data(), querySize, coordinates, &cs);
     db.close();
 
     const double tolerance = 1.0e-6;
     for (size_t i = 0; i < querySize; ++i) {
-        const double toleranceV = fabs(valsE[i]) > 0.0 ? tolerance*valsE[i] : tolerance;
-        CHECK_THAT(data[i], Catch::Matchers::WithinAbs(valsE[i], toleranceV));
+        const double toleranceV = fabs(valuesE[i]) > 0.0 ? tolerance*valuesE[i] : tolerance;
+        CHECK_THAT(values[i], Catch::Matchers::WithinAbs(valuesE[i], toleranceV));
     } // for
 } // testQueryB
 

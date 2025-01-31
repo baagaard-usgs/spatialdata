@@ -14,6 +14,7 @@
 
 #include "SimpleGridDBData.hh" // USES SimpleGridDBData
 #include "SimpleGridDB.hh" // USES SimpleGridDB::NEAREST
+#include "Exception.hh" // USES OutOfBounds
 
 #include "spatialdata/geocoords/CoordSys.hh" // USES CoordSys
 #include "spatialdata/geocoords/Converter.hh" // USES Converter
@@ -95,7 +96,7 @@ spatialdata::spatialdb::SimpleGridDBQuery::setQueryValues(const std::vector<std:
 
 // ----------------------------------------------------------------------
 // Query the database.
-int
+void
 spatialdata::spatialdb::SimpleGridDBQuery::query(double* values,
                                                  const size_t numValues,
                                                  const double* coordinates,
@@ -159,8 +160,7 @@ spatialdata::spatialdb::SimpleGridDBQuery::query(double* values,
         if (( index0 < 0.0) || (( index0 > 0) && ( index0 > size0-1.0) ) ||
             ( index1 < 0.0) || (( index1 > 0) && ( index1 > size1-1.0) ) ||
             ( index2 < 0.0) || (( index2 > 0) && ( index2 > size2-1.0) )) {
-            queryFlag = 1;
-            return queryFlag;
+            throw OutOfBounds("Could not find points for linear interpolation.");
         } // if
 
         switch (_data.getDataDim()) {
@@ -193,14 +193,6 @@ spatialdata::spatialdb::SimpleGridDBQuery::query(double* values,
         const double* dataLoc = _data.getData(indexData);assert(dataLoc);
         for (size_t iValue = 0; iValue < querySize; ++iValue) {
             values[iValue] = dataLoc[_queryIndices[iValue]];
-#if 0 // DEBUGGING
-            std::cout << "val["<<iValue<<"]: " << values[iValue]
-                      << ", indexData: " << indexData
-                      << ", index0: " << index0
-                      << ", index1: " << index1
-                      << ", index2: " << index2
-                      << std::endl;
-#endif
         } // for
         break;
     } // NEAREST
@@ -208,8 +200,6 @@ spatialdata::spatialdb::SimpleGridDBQuery::query(double* values,
         assert(false);
         throw std::logic_error("Unsupported query type in SimpleGridDB::query().");
     } // switch
-
-    return queryFlag;
 } // query
 
 
@@ -395,18 +385,6 @@ spatialdata::spatialdb::SimpleGridDBQuery::_interpolate3D(double* values,
             wt101 * data101[qVal] +
             wt110 * data110[qVal] +
             wt111 * data111[qVal];
-#if 0 // DEBUGGING
-        std::cout << "val["<<iValue<<"]: " << values[iValue]
-                  << ", wt000: " << wt000 << ", data: " << data000[qVal]
-                  << ", wt001: " << wt001 << ", data: " << data001[qVal]
-                  << ", wt010: " << wt010 << ", data: " << data010[qVal]
-                  << ", wt011: " << wt011 << ", data: " << data011[qVal]
-                  << ", wt100: " << wt100 << ", data: " << data100[qVal]
-                  << ", wt101: " << wt101 << ", data: " << data101[qVal]
-                  << ", wt110: " << wt110 << ", data: " << data110[qVal]
-                  << ", wt111: " << wt111 << ", data: " << data111[qVal]
-                  << std::endl;
-#endif
     } // for
 
 } // _interpolate3D

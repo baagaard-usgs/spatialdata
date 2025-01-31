@@ -9,27 +9,27 @@
 // =================================================================================================
 #pragma once
 
-#include "spatialdata/spatialdb/UserFunctionDB.hh" // Test subject
+#include "spatialdata/spatialdb/CxxFunctionDB.hh" // Test subject
 
 /// Namespace for spatial package
 namespace spatialdata {
     namespace spatialdb {
-        class TestUserFunctionDB;
-        class TestUserFunctionDB_Data;
+        class TestCxxFunctionDB;
+        class TestCxxFunctionDB_Data;
     } // spatialdb
 } // spatialdata
 
 // ------------------------------------------------------------------------------------------------
-class spatialdata::spatialdb::TestUserFunctionDB {
+class spatialdata::spatialdb::TestCxxFunctionDB {
     // PUBLIC METHODS /////////////////////////////////////////////////////////////////////////////
 public:
 
     /// Constructor.
-    TestUserFunctionDB(TestUserFunctionDB_Data* data,
-                       UserFunctionDB* db);
+    TestCxxFunctionDB(TestCxxFunctionDB_Data* data,
+                      CxxFunctionDB* db);
 
     /// Destructor.
-    ~TestUserFunctionDB(void);
+    ~TestCxxFunctionDB(void);
 
     /// Test constructor
     static
@@ -53,7 +53,7 @@ public:
     void testGetNamesDBValues(void);
 
     /// Test setQueryValues().
-    void testQueryVals(void);
+    void testQueryValues(void);
 
     /// Test query().
     void testQuery(void);
@@ -62,13 +62,13 @@ protected:
 
     // PROTECTED MEMBERS //////////////////////////////////////////////////
 
-    UserFunctionDB* _db; ///< Test subject.
-    TestUserFunctionDB_Data* _data; ///< Test data.
+    std::unique_ptr<CxxFunctionDB> _db; ///< Test subject.
+    std::unique_ptr<TestCxxFunctionDB_Data> _data; ///< Test data.
 
-}; // class TestUserFunctionDB
+}; // class TestCxxFunctionDB
 
 // ------------------------------------------------------------------------------------------------
-class spatialdata::spatialdb::TestUserFunctionDB_Data {
+class spatialdata::spatialdb::TestCxxFunctionDB_Data {
     // PUBLIC STRUCTS ///////////////////////////////////////////////////////
 public:
 
@@ -83,22 +83,22 @@ public:
 public:
 
     /// Constructor
-    TestUserFunctionDB_Data(void);
+    TestCxxFunctionDB_Data(void);
 
     /// Destructor
-    ~TestUserFunctionDB_Data(void);
+    ~TestCxxFunctionDB_Data(void);
 
     // PUBLIC MEMBERS ///////////////////////////////////////////////////////
 public:
 
     size_t numValues; ///< Number of values in spatial database.
     const UserData* values; ///< Names of values in spatial database.
-    spatialdata::geocoords::CoordSys* cs; ///< Coordinate system.
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs; ///< Coordinate system.
 
     const double* queryXYZ; ///< Coordinate sof points in test queries.
     const double* queryValues; ///< Expected values in test queries.
     int numQueryPoints; ///< Number of points in test queries.
 
-}; // TestUserFunctionDB_Data
+}; // TestCxxFunctionDB_Data
 
 // End of file

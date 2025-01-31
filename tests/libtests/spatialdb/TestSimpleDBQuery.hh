@@ -11,6 +11,7 @@
 
 #include "spatialdata/spatialdb/spatialdbfwd.hh" // USES SimpleDB, SimpleDBQuery
 
+#include <memory> // HASA std::unique_ptr
 #include <cstddef> // USES size_t
 
 /// Namespace for spatial package
@@ -53,15 +54,15 @@ public:
     // PROTECTED MEMBERS //////////////////////////////////////////////////////////////////////////
 protected:
 
-    /// Populdate database with values.
+    /// Populate database with values.
     void _initializeDB(void);
 
     // PROTECTED MEMBERS //////////////////////////////////////////////////////////////////////////
 protected:
 
-    SimpleDB* _db; ///< Database for test subject.
-    SimpleDBQuery* _query; ///< Test subject.
-    TestSimpleDBQuery_Data* _data; ///< Test data.
+    std::unique_ptr<SimpleDBData> _data; ///< Database for test subject.
+    std::unique_ptr<SimpleDBQuery> _query; ///< Test subject.
+    std::unique_ptr<TestSimpleDBQuery_Data> _testData; ///< Test data.
 
 }; // class TestSimpleDBQuery
 
@@ -89,6 +90,7 @@ public:
     const double* dbValues; ///< Database values at locations.
     const char** names; ///< Names of values in database.
     const char** units; ///< Units of values in database.
+    const char* description; ///< Description of database.
     //@}
 
     /// @name Query information

@@ -12,7 +12,6 @@
 
 #include "TestSimpleDBQuery.hh" // Implementation of class methods
 
-#include "spatialdata/spatialdb/SimpleDB.hh" // USES SimpleDB
 #include "spatialdata/spatialdb/SimpleDBQuery.hh" // USES SimpleDBQuery
 #include "spatialdata/spatialdb/SimpleDBData.hh" // USES SimpleDBData
 
@@ -26,26 +25,26 @@
 // ----------------------------------------------------------------------
 // Constructor.
 spatialdata::spatialdb::TestSimpleDBQuery::TestSimpleDBQuery(TestSimpleDBQuery_Data* data) :
-    _data(data) {
-    _db = new SimpleDB;assert(_db);
-    _query = new SimpleDBQuery(*_db);assert(_query);
+    _data(new SimpleDBData),
+    _testData(data) {
+    REQUIRE(_data);
+    REQUIRE(_testData);
+    REQUIRE(_testData->description);
+    _query = std::make_unique<SimpleDBQuery>(*_data.get(), _testData->description);REQUIRE(_query);
 } // constructor
 
 
 // ----------------------------------------------------------------------
 // Destructor.
-spatialdata::spatialdb::TestSimpleDBQuery::~TestSimpleDBQuery(void) {
-    delete _data;_data = NULL;
-    delete _db;_db = NULL;
-    delete _query;_query = NULL;
-} // destructor
+spatialdata::spatialdb::TestSimpleDBQuery::~TestSimpleDBQuery(void) {}
 
 
 // ----------------------------------------------------------------------
 // Test Constructor()
 void
 spatialdata::spatialdb::TestSimpleDBQuery::testConstructor(void) {
-    assert(_query);
+    REQUIRE(_query);
+    CHECK(std::string(_testData->description) == _query->_description);
 } // testConstructor
 
 
@@ -53,7 +52,7 @@ spatialdata::spatialdb::TestSimpleDBQuery::testConstructor(void) {
 // Test accessors.
 void
 spatialdata::spatialdb::TestSimpleDBQuery::testAccessors(void) {
-    assert(_query);
+    REQUIRE(_query);
 
     const SimpleDB::QueryEnum queryTypeDefault = SimpleDB::NEAREST;
     _query->setQueryType(queryTypeDefault);
@@ -71,15 +70,15 @@ void
 spatialdata::spatialdb::TestSimpleDBQuery::testQueryVals(void) {
     _initializeDB();
 
-    const size_t numNames = 3;
-    const char* names[3] = { "two", "one", "three" };
+    std::vector<std::string> names({ "two", "one", "three" });
+    const size_t querySize = 3;
     const size_t queryIndices[3] = { 1, 0, 2 };
 
-    assert(_query);
-    _query->setQueryValues(names, numNames);
-    REQUIRE(numNames == _query->_querySize);
-    for (size_t i = 0; i < numNames; ++i) {
-        CHECK(queryIndices[i] == _query->_queryValues[i]);
+    REQUIRE(_query);
+    _query->setQueryValues(names);
+    REQUIRE(querySize == _query->_queryIndices.size());
+    for (size_t i = 0; i < querySize; ++i) {
+        CHECK(queryIndices[i] == _query->_queryIndices[i]);
     } // for
 } // testQueryVals
 
@@ -89,14 +88,14 @@ spatialdata::spatialdb::TestSimpleDBQuery::testQueryVals(void) {
 void
 spatialdata::spatialdb::TestSimpleDBQuery::testDistSquared(void) {
     _initializeDB();
-    assert(_data);
+    REQUIRE(_testData);
 
-    assert(_data->numPoints >= 2);
-    const size_t spaceDim = _data->spaceDim;
-    const double dist2 = SimpleDBQuery::_distSquared(&_data->coordinates[0*spaceDim], &_data->coordinates[1*spaceDim]);
+    REQUIRE(_testData->numPoints >= 2);
+    const size_t spaceDim = _testData->spaceDim;
+    const double dist2 = SimpleDBQuery::_distSquared(&_testData->coordinates[0*spaceDim], &_testData->coordinates[1*spaceDim]);
     const double tolerance = 1.0e-06;
-    const double toleranceV = fabs(_data->dist2) > 0.0 ? fabs(_data->dist2) * tolerance : tolerance;
-    CHECK_THAT(dist2, Catch::Matchers::WithinAbs(_data->dist2, toleranceV));
+    const double toleranceV = fabs(_testData->dist2) > 0.0 ? fabs(_testData->dist2) * tolerance : tolerance;
+    CHECK_THAT(dist2, Catch::Matchers::WithinAbs(_testData->dist2, toleranceV));
 } // _testDistSquared
 
 
@@ -105,24 +104,24 @@ spatialdata::spatialdb::TestSimpleDBQuery::testDistSquared(void) {
 void
 spatialdata::spatialdb::TestSimpleDBQuery::testArea(void) {
     _initializeDB();
-    assert(_data);
+    REQUIRE(_testData);
 
-    const size_t spaceDim = _data->spaceDim;
+    const size_t spaceDim = _testData->spaceDim;
     if (spaceDim < 2) { return; }
 
-    assert(_data->numPoints >= 3);
+    REQUIRE(_testData->numPoints >= 3);
     double area = 0;
     double areaDir[3];
     SimpleDBQuery::_area(&area, areaDir,
-                         &_data->coordinates[0*spaceDim],
-                         &_data->coordinates[1*spaceDim],
-                         &_data->coordinates[2*spaceDim]);
+                         &_testData->coordinates[0*spaceDim],
+                         &_testData->coordinates[1*spaceDim],
+                         &_testData->coordinates[2*spaceDim]);
     const double tolerance = 1.0e-06;
-    double toleranceV = fabs(_data->area) > 0.0 ? fabs(_data->area) * tolerance : tolerance;
-    CHECK_THAT(area, Catch::Matchers::WithinAbs(_data->area, toleranceV));
+    double toleranceV = fabs(_testData->area) > 0.0 ? fabs(_testData->area) * tolerance : tolerance;
+    CHECK_THAT(area, Catch::Matchers::WithinAbs(_testData->area, toleranceV));
     for (size_t i = 0; i < spaceDim; ++i) {
-        toleranceV = fabs(_data->areaDir[i]) > 0.0 ? fabs(_data->areaDir[i]) * tolerance : tolerance;
-        CHECK_THAT(areaDir[i], Catch::Matchers::WithinAbs(_data->areaDir[i], toleranceV));
+        toleranceV = fabs(_testData->areaDir[i]) > 0.0 ? fabs(_testData->areaDir[i]) * tolerance : tolerance;
+        CHECK_THAT(areaDir[i], Catch::Matchers::WithinAbs(_testData->areaDir[i], toleranceV));
     } // for
 } // _testArea
 
@@ -132,20 +131,20 @@ spatialdata::spatialdb::TestSimpleDBQuery::testArea(void) {
 void
 spatialdata::spatialdb::TestSimpleDBQuery::testVolume(void) {
     _initializeDB();
-    assert(_data);
+    REQUIRE(_testData);
 
-    const size_t spaceDim = _data->spaceDim;
+    const size_t spaceDim = _testData->spaceDim;
     if (spaceDim < 3) { return; }
 
-    assert(_data->numPoints >= 4);
+    REQUIRE(_testData->numPoints >= 4);
     const double volume =
-        SimpleDBQuery::_volume(&_data->coordinates[0*spaceDim],
-                               &_data->coordinates[1*spaceDim],
-                               &_data->coordinates[2*spaceDim],
-                               &_data->coordinates[3*spaceDim]);
+        SimpleDBQuery::_volume(&_testData->coordinates[0*spaceDim],
+                               &_testData->coordinates[1*spaceDim],
+                               &_testData->coordinates[2*spaceDim],
+                               &_testData->coordinates[3*spaceDim]);
     const double tolerance = 1.0e-06;
-    const double toleranceV = fabs(_data->volume) > 0.0 ? fabs(_data->volume) * tolerance : tolerance;
-    CHECK_THAT(volume, Catch::Matchers::WithinAbs(_data->volume, toleranceV));
+    const double toleranceV = fabs(_testData->volume) > 0.0 ? fabs(_testData->volume) * tolerance : tolerance;
+    CHECK_THAT(volume, Catch::Matchers::WithinAbs(_testData->volume, toleranceV));
 } // testVolume
 
 
@@ -153,17 +152,33 @@ spatialdata::spatialdb::TestSimpleDBQuery::testVolume(void) {
 // Populate database with data.
 void
 spatialdata::spatialdb::TestSimpleDBQuery::_initializeDB(void) {
-    assert(_data);
+    REQUIRE(_testData);
+    REQUIRE(_data);
 
-    SimpleDBData* dbData = new SimpleDBData;assert(dbData);
-    dbData->allocate(_data->numLocs, _data->numValues, _data->spaceDim, _data->dataDim);
-    dbData->setData(_data->dbValues, _data->numLocs, _data->numValues);
-    dbData->setCoordinates(_data->dbCoordinates, _data->numLocs, _data->spaceDim);
-    dbData->setNames(_data->names, _data->numValues);
-    dbData->setUnits(_data->units, _data->numValues);
+    _data->allocate(_testData->numLocs, _testData->numValues, _testData->spaceDim, _testData->dataDim);
 
-    delete _db->_data;_db->_data = dbData;
-    delete _db->_cs;_db->_cs = new spatialdata::geocoords::CSCart;assert(_db->_cs);
+    std::vector<std::string> names(_testData->names, _testData->names+_testData->numValues);
+    _data->setNames(names);
+
+    std::vector<std::string> units(_testData->units, _testData->units+_testData->numValues);
+    _data->setUnits(units);
+
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());REQUIRE(cs);
+    _data->setCoordSys(cs);
+
+    for (size_t iLoc = 0, iData = 0, iCoords = 0; iLoc < _testData->numLocs; ++iLoc) {
+        // data
+        double* const data = _data->getData(iLoc);
+        for (size_t iValue = 0; iValue < _testData->numValues; ++iValue) {
+            data[iValue] = _testData->dbValues[iData++];
+        } // for
+
+        // coordinates
+        double* const coordinates = _data->getCoordinates(iLoc);
+        for (size_t iDim = 0; iDim < _testData->spaceDim; ++iDim) {
+            coordinates[iDim] = _testData->dbCoordinates[iCoords++];
+        } // for
+    } // for
 } // _initializeDB
 
 
@@ -174,14 +189,15 @@ spatialdata::spatialdb::TestSimpleDBQuery_Data::TestSimpleDBQuery_Data(void) :
     spaceDim(0),
     numValues(0),
     dataDim(0),
-    dbCoordinates(NULL),
-    dbValues(NULL),
-    names(NULL),
-    units(NULL),
+    dbCoordinates(nullptr),
+    dbValues(nullptr),
+    names(nullptr),
+    units(nullptr),
+    description(nullptr),
     numPoints(0),
-    coordinates(NULL),
+    coordinates(nullptr),
     dist2(0.0),
-    areaDir(NULL),
+    areaDir(nullptr),
     volume(0.0) {}
 
 
@@ -189,13 +205,13 @@ spatialdata::spatialdb::TestSimpleDBQuery_Data::TestSimpleDBQuery_Data(void) :
 // Constructor.
 spatialdata::spatialdb::TestSimpleDBQuery_Data::~TestSimpleDBQuery_Data(void) {
     // Set static const data in derived classes to NULL (don't deallocate).
-    dbCoordinates = NULL;
-    dbValues = NULL;
-    names = NULL;
-    units = NULL;
-    coordinates = NULL;
-    areaDir = NULL;
-
+    dbCoordinates = nullptr;
+    dbValues = nullptr;
+    names = nullptr;
+    units = nullptr;
+    description = nullptr;
+    coordinates = nullptr;
+    areaDir = nullptr;
 } // destructor
 
 

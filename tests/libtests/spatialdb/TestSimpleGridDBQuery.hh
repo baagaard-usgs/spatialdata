@@ -13,25 +13,24 @@
 
 #include <memory> // HASA std::unique_ptr
 #include <cstddef> // USES size_t
-#include <cassert>
 
 namespace spatialdata {
     namespace spatialdb {
-        class TestSimpleGridDB;
-        class TestSimpleGridDB_Data;
+        class TestSimpleGridDBQuery;
+        class TestSimpleGridDBQuery_Data;
     } // spatialdb
 } // spatialdata
 
 // ------------------------------------------------------------------------------------------------
-class spatialdata::spatialdb::TestSimpleGridDB {
+class spatialdata::spatialdb::TestSimpleGridDBQuery {
     // PUBLIC METHODS /////////////////////////////////////////////////////////////////////////////
 public:
 
     /// Constructor.
-    TestSimpleGridDB(TestSimpleGridDB_Data* data);
+    TestSimpleGridDBQuery(TestSimpleGridDBQuery_Data* data);
 
     /// Destructor.
-    ~TestSimpleGridDB(void);
+    ~TestSimpleGridDBQuery(void);
 
     /// Test constructor.
     static
@@ -41,8 +40,8 @@ public:
     static
     void testAccessors(void);
 
-    /// Test getNamesDBValues().
-    void testGetNamesDBValues(void);
+    /// Test setQueryValues()
+    void testQueryValues(void);
 
     /// Test query() using nearest neighbor.
     void testQueryNearest(void);
@@ -53,6 +52,9 @@ public:
     // PRIVATE METHODS ////////////////////////////////////////////////////////////////////////////
 private:
 
+    /// Populate database with data.
+    void _initializeDB(void);
+
     /** Test query method by doing query and checking values returned.
      *
      * @param queryData Data for query.
@@ -61,25 +63,25 @@ private:
     void _checkQuery(const double* queryData,
                      const int* flagsE);
 
-private:
+    // PROTECTED MEMBERS //////////////////////////////////////////////////////////////////////////
+protected:
 
-    // PRIVATE MEMBERS ////////////////////////////////////////////////////////////////////////////
+    std::unique_ptr<SimpleGridDBData> _data; ///< Database for test subject.
+    std::unique_ptr<SimpleGridDBQuery> _query; ///< Test subject.
+    std::unique_ptr<TestSimpleGridDBQuery_Data> _testData; ///< Test data.
 
-    std::unique_ptr<SimpleGridDB> _db;
-    std::unique_ptr<TestSimpleGridDB_Data> _testData; ///< Test data.
-
-}; // class TestSimpleGridDB
+}; // class TestSimpleGridDBQuery
 
 // ------------------------------------------------------------------------------------------------
-class spatialdata::spatialdb::TestSimpleGridDB_Data {
+class spatialdata::spatialdb::TestSimpleGridDBQuery_Data {
     // PUBLIC METHODS /////////////////////////////////////////////////////////////////////////////
 public:
 
     /// Constructor
-    TestSimpleGridDB_Data(void);
+    TestSimpleGridDBQuery_Data(void);
 
     /// Destructor
-    ~TestSimpleGridDB_Data(void);
+    ~TestSimpleGridDBQuery_Data(void);
 
     // PUBLIC MEMBERS ///////////////////////////////////////////////////////
 public:
@@ -89,17 +91,16 @@ public:
     size_t numX; ///< Number of locations in x dimension.
     size_t numY; ///< Number of locations in y dimension.
     size_t numZ; ///< Number of locations in z dimension.
-    size_t spaceDim; ///< Spatial dimension for coordinates of locations.
-    size_t numValues; ///< Number of values per location in database.
-    size_t dataDim; ///< Spatial dimension of data in database.
+    size_t spaceDim; ///< Spatial dimension for coordinates of locations
+    size_t numValues; ///< Number of values per location in database
+    size_t dataDim; ///< Spatial dimension of data in database
     const double* dbX; ///< Coordinates along x dimension.
     const double* dbY; ///< Coordinates along x dimension.
     const double* dbZ; ///< Coordinates along x dimension.
-    const double* dbData; ///< Database data.
-    const char** names; ///< Names of values in database.
-    const char** units; ///< Units of values in database.
+    const double* dbData; ///< Database data
+    const char** names; ///< Names of values in database
+    const char** units; ///< Units of values in database
     const char* description; ///< Description of database.
-    const char* filename; ///< Name of spatial database file.
     //@}
 
     /// @name Query information
@@ -110,6 +111,6 @@ public:
     const int* errFlags; ///< Expected return values for queries
     //@}
 
-};
+}; // TestSimpleGridDBQuery
 
 // End of file

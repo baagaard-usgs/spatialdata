@@ -90,10 +90,12 @@ void
 spatialdata::spatialdb::TestSimpleDBData::testAllocate(void) {
     const size_t numLocs = 4;
     const size_t numValues = 5;
-    const size_t spaceDim = 3;
     const size_t dataDim = 1;
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());assert(cs);
+    const size_t spaceDim = cs->getSpaceDim();
 
     SimpleDBData data;
+    data.setCoordSys(cs);
     data.allocate(numLocs, numValues, spaceDim, dataDim);
 
     CHECK(numLocs == data.getNumLocs());
@@ -101,10 +103,10 @@ spatialdata::spatialdb::TestSimpleDBData::testAllocate(void) {
     CHECK(spaceDim == data.getSpaceDim());
     CHECK(dataDim == data.getDataDim());
 
-    assert(data._data);
-    assert(data._coordinates);
-    assert(data._names);
-    assert(data._units);
+    assert(numLocs*numValues == data._data.size());
+    assert(numLocs*spaceDim == data._coordinates.size());
+    assert(numValues == data._names.size());
+    assert(numValues == data._units.size());
 } // testAllocate
 
 
@@ -114,8 +116,9 @@ void
 spatialdata::spatialdb::TestSimpleDBData::testData(void) {
     const size_t numLocs = 4;
     const size_t numValues = 2;
-    const size_t spaceDim = 3;
     const size_t dataDim = 1;
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());assert(cs);
+    const size_t spaceDim = cs->getSpaceDim();
 
     const double valuesE[numLocs*numValues] = {
         0.11, 0.21,
@@ -125,8 +128,15 @@ spatialdata::spatialdb::TestSimpleDBData::testData(void) {
     };
 
     SimpleDBData data;
+    data.setCoordSys(cs);
     data.allocate(numLocs, numValues, spaceDim, dataDim);
-    data.setData(valuesE, numLocs, numValues);
+    for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
+        double* const values = data.getData(iLoc);
+        assert(values);
+        for (size_t iVal = 0; iVal < numValues; ++iVal) {
+            values[iVal] = valuesE[i++];
+        } // for
+    } // for
 
     for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
         const double* values = data.getData(iLoc);
@@ -144,10 +154,11 @@ void
 spatialdata::spatialdb::TestSimpleDBData::testCoordinates(void) {
     const size_t numLocs = 4;
     const size_t numValues = 2;
-    const size_t spaceDim = 3;
     const size_t dataDim = 1;
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());assert(cs);
+    const size_t spaceDim = cs->getSpaceDim();
 
-    const double coordsE[numLocs*spaceDim] = {
+    const double coordinatesE[numLocs*3] = {
         1.1, 2.1, 3.1,
         1.2, 2.2, 3.2,
         1.3, 2.3, 3.3,
@@ -155,14 +166,21 @@ spatialdata::spatialdb::TestSimpleDBData::testCoordinates(void) {
     };
 
     SimpleDBData data;
+    data.setCoordSys(cs);
     data.allocate(numLocs, numValues, spaceDim, dataDim);
-    data.setCoordinates(coordsE, numLocs, spaceDim);
+    for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
+        double* const coordinates = data.getCoordinates(iLoc);
+        assert(coordinates);
+        for (size_t iDim = 0; iDim < spaceDim; ++iDim) {
+            coordinates[iDim] = coordinatesE[i++];
+        } // for
+    } // for
 
     for (size_t iLoc = 0, i = 0; iLoc < numLocs; ++iLoc) {
-        const double* coords = data.getCoordinates(iLoc);
-        assert(coords);
+        const double* coordinates = data.getCoordinates(iLoc);
+        assert(coordinates);
         for (size_t iDim = 0; iDim < spaceDim; ++iDim) {
-            CHECK(coordsE[i++] == coords[iDim]);
+            CHECK(coordinatesE[i++] == coordinates[iDim]);
         } // for
     } // for
 } // testCoordinates
@@ -174,19 +192,17 @@ void
 spatialdata::spatialdb::TestSimpleDBData::testNames(void) {
     const size_t numLocs = 4;
     const size_t numValues = 2;
-    const size_t spaceDim = 3;
     const size_t dataDim = 1;
-
-    const char* namesE[numValues] = {
-        "one", "two",
-    };
+    const std::vector<std::string> names({ "one", "two" });
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());assert(cs);
+    const size_t spaceDim = cs->getSpaceDim();
 
     SimpleDBData data;
     data.allocate(numLocs, numValues, spaceDim, dataDim);
-    data.setNames(namesE, numValues);
+    data.setNames(names);
 
     for (size_t i = 0; i < numValues; ++i) {
-        CHECK(std::string(namesE[i]) == std::string(data.getName(i)));
+        CHECK(names[i] == std::string(data.getName(i)));
     } // for
 } // testNames
 
@@ -197,19 +213,17 @@ void
 spatialdata::spatialdb::TestSimpleDBData::testUnits(void) {
     const size_t numLocs = 4;
     const size_t numValues = 2;
-    const size_t spaceDim = 3;
     const size_t dataDim = 1;
-
-    const char* unitsE[numValues] = {
-        "m", "m/s",
-    };
+    const std::vector<std::string> units({ "m", "m/s" });
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());assert(cs);
+    const size_t spaceDim = cs->getSpaceDim();
 
     SimpleDBData data;
     data.allocate(numLocs, numValues, spaceDim, dataDim);
-    data.setUnits(unitsE, numValues);
+    data.setUnits(units);
 
     for (size_t i = 0; i < numValues; ++i) {
-        CHECK(std::string(unitsE[i]) == std::string(data.getUnits(i)));
+        CHECK(units[i] == std::string(data.getUnits(i)));
     } // for
 } // testUnits
 

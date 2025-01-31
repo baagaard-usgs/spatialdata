@@ -17,26 +17,28 @@ TESTS = libtest_spatialdb
 check_PROGRAMS = libtest_spatialdb
 
 libtest_spatialdb_SOURCES = \
-    TestAnalyticDB.cc \
+	TestSpatialDB.cc \
 	TestUniformDB.cc \
-	TestUserFunctionDB.cc \
-	TestUserFunctionDB_Cases.cc \
+    TestAnalyticDB.cc \
+	TestCxxFunctionDB.cc \
+	TestCxxFunctionDB_Cases.cc \
+	TestGravityField.cc \
+	TestGravityField_Cases.cc \
 	TestSimpleDBData.cc \
-	TestSimpleIOAscii.cc \
+	TestSimpleDBIO.cc \
 	TestSimpleDBQuery.cc \
 	TestSimpleDBQuery_Cases.cc \
 	TestSimpleDB.cc \
 	TestSimpleDB_Cases.cc \
+	TestSimpleGridDBData.cc \
+	TestSimpleGridDBIO.cc \
+	TestSimpleGridDBQuery.cc \
+	TestSimpleGridDBQuery_Cases.cc \
 	TestSimpleGridDB.cc \
 	TestSimpleGridDB_Cases.cc \
-	TestSimpleGridAscii.cc \
 	TestCompositeDB.cc \
-	TestSCECCVMH.cc \
-	TestSpatialDB.cc \
-	TestGravityField.cc \
-	TestGravityField_Cases.cc \
-	TestTimeHistoryIO.cc \
 	TestTimeHistory.cc \
+	TestTimeHistoryIO.cc \
 	$(top_srcdir)/tests/src/driver_catch2.cc
 
 
@@ -44,7 +46,8 @@ noinst_HEADERS = \
 	TestGravityField.hh \
 	TestSimpleDBQuery.hh \
 	TestSimpleDB.hh \
+	TestSimpleGridDBQuery.hh \
 	TestSimpleGridDB.hh \
-	TestUserFunctionDB.hh
+	TestCxxFunctionDB.hh
 
 # End of file

@@ -14,8 +14,6 @@
 
 #include "catch2/catch_test_macros.hpp"
 
-#include <cassert>
-
 // ------------------------------------------------------------------------------------------------
 namespace spatialdata {
     namespace spatialdb {
@@ -52,56 +50,57 @@ TEST_CASE("TestSimpleDB::testAccessors", "[TestSimpleDB]") {
 }
 
 // Data test cases
-TEST_CASE("TestSimpleDB::testGetNamesDBValues", "[TestSimpleDB][Point3D]") {
+TEST_CASE("TestSimpleDB::Point3D::testGetNamesDBValues", "[TestSimpleDB][Point3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Point3D()).testGetNamesDBValues();
 }
-TEST_CASE("TestSimpleDB::testQueryNearest", "[TestSimpleDB][Point3D]") {
+TEST_CASE("TestSimpleDB::Point3D::testQueryNearest", "[TestSimpleDB][Point3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Point3D()).testQueryNearest();
 }
-TEST_CASE("TestSimpleDB::testQueryLinear", "[TestSimpleDB][Point3D]") {
+TEST_CASE("TestSimpleDB::Point3D::testQueryLinear", "[TestSimpleDB][Point3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Point3D()).testQueryLinear();
 }
 
-TEST_CASE("TestSimpleDB::testGetNamesDBValues", "[TestSimpleDB][Line3D]") {
+TEST_CASE("TestSimpleDB::Line3D::testGetNamesDBValues", "[TestSimpleDB][Line3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Line3D()).testGetNamesDBValues();
 }
-TEST_CASE("TestSimpleDB::testQueryNearest", "[TestSimpleDB][Line3D]") {
+TEST_CASE("TestSimpleDB::Line3D::testQueryNearest", "[TestSimpleDB][Line3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Line3D()).testQueryNearest();
 }
-TEST_CASE("TestSimpleDB::testQueryLinear", "[TestSimpleDB][Line3D]") {
+TEST_CASE("TestSimpleDB::Line3D::testQueryLinear", "[TestSimpleDB][Line3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Line3D()).testQueryLinear();
 }
 
-TEST_CASE("TestSimpleDB::testGetNamesDBValues", "[TestSimpleDB][Area3D]") {
+TEST_CASE("TestSimpleDB::Area3D::testGetNamesDBValues", "[TestSimpleDB][Area3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Area3D()).testGetNamesDBValues();
 }
-TEST_CASE("TestSimpleDB::testQueryNearest", "[TestSimpleDB][Area3D]") {
+TEST_CASE("TestSimpleDB::Area3D::testQueryNearest", "[TestSimpleDB][Area3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Area3D()).testQueryNearest();
 }
-TEST_CASE("TestSimpleDB::testQueryLinear", "[TestSimpleDB][Area3D]") {
+TEST_CASE("TestSimpleDB::Area3D::testQueryLinear", "[TestSimpleDB][Area3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Area3D()).testQueryLinear();
 }
 
-TEST_CASE("TestSimpleDB::testGetNamesDBValues", "[TestSimpleDB][Volume3D]") {
+TEST_CASE("TestSimpleDB::Volume3D::testGetNamesDBValues", "[TestSimpleDB][Volume3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Volume3D()).testGetNamesDBValues();
 }
-TEST_CASE("TestSimpleDB::testQueryNearest", "[TestSimpleDB][Volume3D]") {
+TEST_CASE("TestSimpleDB::Volume3D::testQueryNearest", "[TestSimpleDB][Volume3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Volume3D()).testQueryNearest();
 }
-TEST_CASE("TestSimpleDB::testQueryLinear", "[TestSimpleDB][Volume3D]") {
+TEST_CASE("TestSimpleDB::Volume3D::testQueryLinear", "[TestSimpleDB][Volume3D]") {
     spatialdata::spatialdb::TestSimpleDB(spatialdata::spatialdb::TestSimpleDB_Cases::Volume3D()).testQueryLinear();
 }
 
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDB_Data*
 spatialdata::spatialdb::TestSimpleDB_Cases::Point3D(void) {
-    spatialdata::spatialdb::TestSimpleDB_Data* data = new TestSimpleDB_Data;assert(data);
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleDB_Data> data(new TestSimpleDB_Data);assert(data);
 
     data->numLocs = 1;
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 0;
     data->numQueries = 3;
+    data->description = "Point3D";
 
     static const double dbCoordinates[3] = {
         1.00000000e-01,  2.00000000e-01,  3.00000000e-01,
@@ -143,20 +142,21 @@ spatialdata::spatialdb::TestSimpleDB_Cases::Point3D(void) {
         0, 0, 0,};
     data->errFlags = errFlags;
 
-    return data;
+    return data.release();
 } // Point3D
 
 
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDB_Data*
 spatialdata::spatialdb::TestSimpleDB_Cases::Line3D(void) {
-    spatialdata::spatialdb::TestSimpleDB_Data* data = new TestSimpleDB_Data;assert(data);
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleDB_Data> data(new TestSimpleDB_Data);assert(data);
 
     data->numLocs = 5;
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 1;
     data->numQueries = 4;
+    data->description = "Line3D";
 
     static const double dbCoordinates[5*3] = {
         3.40000000e+00,  9.50000000e+00,  8.70000000e+00,
@@ -208,20 +208,21 @@ spatialdata::spatialdb::TestSimpleDB_Cases::Line3D(void) {
         0, 0, 1, 0,};
     data->errFlags = errFlags;
 
-    return data;
+    return data.release();
 } // Line3D
 
 
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDB_Data*
 spatialdata::spatialdb::TestSimpleDB_Cases::Area3D(void) {
-    spatialdata::spatialdb::TestSimpleDB_Data* data = new TestSimpleDB_Data;assert(data);
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleDB_Data> data(new TestSimpleDB_Data);assert(data);
 
     data->numLocs = 6;
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 2;
     data->numQueries = 4;
+    data->description = "Area3D";
 
     static const double dbCoordinates[6*3] = {
         3.40000000e+00,  9.50000000e+00,  8.70000000e+00,
@@ -275,7 +276,7 @@ spatialdata::spatialdb::TestSimpleDB_Cases::Area3D(void) {
         0, 0, 1, 0,};
     data->errFlags = errFlags;
 
-    return data;
+    return data.release();
 } // Area3D
 
 
@@ -283,13 +284,14 @@ spatialdata::spatialdb::TestSimpleDB_Cases::Area3D(void) {
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDB_Data*
 spatialdata::spatialdb::TestSimpleDB_Cases::Volume3D(void) {
-    spatialdata::spatialdb::TestSimpleDB_Data* data = new TestSimpleDB_Data;assert(data);
+    std::unique_ptr<spatialdata::spatialdb::TestSimpleDB_Data> data(new TestSimpleDB_Data);assert(data);
 
     data->numLocs = 8;
     data->spaceDim = 3;
     data->numValues = 2;
     data->dataDim = 3;
     data->numQueries = 5;
+    data->description = "Volume3D";
 
     static const double dbCoordinates[8*3] = {
         4.46656933e+00,  8.13917840e+00,  8.80292932e+00,
@@ -349,7 +351,7 @@ spatialdata::spatialdb::TestSimpleDB_Cases::Volume3D(void) {
         0, 0, 1, 0, 0, };
     data->errFlags = errFlags;
 
-    return data;
+    return data.release();
 } // Volume3D
 
 

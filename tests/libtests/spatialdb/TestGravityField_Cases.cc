@@ -85,7 +85,7 @@ spatialdata::spatialdb::TestGravityField_Data*
 spatialdata::spatialdb::TestGravityField_Cases::Cart2D(void) {
     TestGravityField_Data* data = new TestGravityField_Data;assert(data);
 
-    data->cs = new spatialdata::geocoords::CSCart();assert(data->cs);
+    data->cs = std::shared_ptr<spatialdata::geocoords::CSCart>(new spatialdata::geocoords::CSCart());assert(data->cs);
     data->cs->setSpaceDim(2);
 
     data->gravityAcc = 2.0;
@@ -110,7 +110,7 @@ spatialdata::spatialdb::TestGravityField_Data*
 spatialdata::spatialdb::TestGravityField_Cases::Cart3D(void) {
     TestGravityField_Data* data = new TestGravityField_Data;assert(data);
 
-    data->cs = new spatialdata::geocoords::CSCart();assert(data->cs);
+    data->cs = std::shared_ptr<spatialdata::geocoords::CSCart>(new spatialdata::geocoords::CSCart());assert(data->cs);
     data->cs->setSpaceDim(3);
 
     data->gravityAcc = 2.0;
@@ -140,7 +140,7 @@ spatialdata::spatialdb::TestGravityField_Data*
 spatialdata::spatialdb::TestGravityField_Cases::Geo(void) {
     TestGravityField_Data* data = new TestGravityField_Data;assert(data);
 
-    spatialdata::geocoords::CSGeo* cs = new spatialdata::geocoords::CSGeo();assert(cs);
+    std::shared_ptr<spatialdata::geocoords::CSGeo> cs(new spatialdata::geocoords::CSGeo());assert(cs);
     cs->setString("EPSG:4326"); // WGS84
     cs->setSpaceDim(3);
     data->cs = cs;
@@ -168,7 +168,7 @@ spatialdata::spatialdb::TestGravityField_Data*
 spatialdata::spatialdb::TestGravityField_Cases::GeoProj(void) {
     TestGravityField_Data* data = new TestGravityField_Data;assert(data);
 
-    spatialdata::geocoords::CSGeo* cs = new spatialdata::geocoords::CSGeo();assert(cs);
+    std::shared_ptr<spatialdata::geocoords::CSGeo> cs(new spatialdata::geocoords::CSGeo());assert(cs);
     cs->setString("EPSG:3310"); // California AEA
     cs->setSpaceDim(3);
     data->cs = cs;
@@ -196,7 +196,7 @@ spatialdata::spatialdb::TestGravityField_Data*
 spatialdata::spatialdb::TestGravityField_Cases::Geocentric(void) {
     TestGravityField_Data* data = new TestGravityField_Data;assert(data);
 
-    spatialdata::geocoords::CSGeo* cs = new spatialdata::geocoords::CSGeo();assert(cs);
+    std::shared_ptr<spatialdata::geocoords::CSGeo> cs(new spatialdata::geocoords::CSGeo());assert(cs);
     cs->setString("EPSG:4978"); // ECEF geocentric
     cs->setSpaceDim(3);
     data->cs = cs;

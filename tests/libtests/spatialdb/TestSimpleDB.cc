@@ -15,7 +15,7 @@
 #include "spatialdata/spatialdb/SimpleDB.hh" // USES SimpleDB
 #include "spatialdata/spatialdb/SimpleDBData.hh" // USES SimpleDBData
 #include "spatialdata/spatialdb/SimpleDBQuery.hh" // USES SimpleDBQuery
-#include "spatialdata/spatialdb/SimpleIOAscii.hh" // USES SimpleIOAscii
+#include "spatialdata/spatialdb/SimpleDBIO.hh" // USES SimpleDBIO
 
 #include "spatialdata/geocoords/CSCart.hh" // USE CSCart
 
@@ -27,30 +27,26 @@
 // ------------------------------------------------------------------------------------------------
 // Constructor.
 spatialdata::spatialdb::TestSimpleDB::TestSimpleDB(TestSimpleDB_Data* data) :
-    _db(new SimpleDB()),
+    _db(new SimpleDB(data->description)),
     _data(data) {
-    assert(_db);
-    assert(_data);
+    REQUIRE(_db);
+    REQUIRE(_data);
 } // constructor
 
 
 // ------------------------------------------------------------------------------------------------
 // Deallocate test data;
-spatialdata::spatialdb::TestSimpleDB::~TestSimpleDB(void) {
-    delete _db;_db = NULL;
-    delete _data;_data = NULL;
-} // testDown
+spatialdata::spatialdb::TestSimpleDB::~TestSimpleDB(void) {}
 
 
 // ------------------------------------------------------------------------------------------------
 // Test constructor
 void
 spatialdata::spatialdb::TestSimpleDB::testConstructors(void) {
-    SimpleDB db;
+    const std::string& description = "TestSimpleDB::testConstructors";
+    SimpleDB db(description.c_str());
 
-    const std::string description("database A");
-    SimpleDB db2(description.c_str());
-    CHECK(description == std::string(db2.getDescription()));
+    CHECK(description == std::string(db.getDescription()));
 } // testConstructors
 
 
@@ -58,18 +54,10 @@ spatialdata::spatialdb::TestSimpleDB::testConstructors(void) {
 // Test accessors.
 void
 spatialdata::spatialdb::TestSimpleDB::testAccessors(void) {
-    SimpleDB db;
+    const std::string& description = "TestSimpleDB::testAccessors";
+    SimpleDB db(description.c_str());
 
-    const std::string description("database 2");
-    db.setDescription(description.c_str());
     CHECK(description == std::string(db.getDescription()));
-
-    spatialdata::spatialdb::SimpleIOAscii io;
-    const std::string filename("db.spatialdb");
-    io.setFilename(filename.c_str());
-    db.setIOHandler(&io);
-    assert(db._iohandler);
-    CHECK(filename == std::string(db._iohandler->getFilename()));
 } // testAccessors
 
 
@@ -78,20 +66,15 @@ spatialdata::spatialdb::TestSimpleDB::testAccessors(void) {
 void
 spatialdata::spatialdb::TestSimpleDB::testGetNamesDBValues(void) {
     _initializeDB();
+    REQUIRE(_db);
+    REQUIRE(_data);
 
-    assert(_db);
-    assert(_data);
+    const std::vector<std::string>& names = _db->getNamesDBValues();
+    REQUIRE(_data->numValues == names.size());
 
-    const char** valueNames = NULL;
-    size_t numValues = 0;
-    _db->getNamesDBValues(&valueNames, &numValues);
-    REQUIRE(_data->numValues == numValues);
-
-    for (size_t i = 0; i < numValues; ++i) {
-        CHECK(std::string(_data->names[i]) == std::string(valueNames[i]));
+    for (size_t i = 0; i < _data->numValues; ++i) {
+        CHECK(std::string(_data->names[i]) == names[i]);
     } // for
-    delete[] valueNames;valueNames = NULL;
-    numValues = 0;
 } // testGetDBValues
 
 
@@ -100,12 +83,11 @@ spatialdata::spatialdb::TestSimpleDB::testGetNamesDBValues(void) {
 void
 spatialdata::spatialdb::TestSimpleDB::testQueryNearest(void) {
     _initializeDB();
-
-    assert(_db);
-    assert(_data);
+    REQUIRE(_db);
+    REQUIRE(_data);
 
     _db->setQueryType(SimpleDB::NEAREST);
-    _checkQuery(_data->queryNearest, NULL);
+    _checkQuery(_data->queryNearest, nullptr);
 } // testQueryNearest
 
 
@@ -114,9 +96,8 @@ spatialdata::spatialdb::TestSimpleDB::testQueryNearest(void) {
 void
 spatialdata::spatialdb::TestSimpleDB::testQueryLinear(void) {
     _initializeDB();
-
-    assert(_db);
-    assert(_data);
+    REQUIRE(_db);
+    REQUIRE(_data);
 
     _db->setQueryType(SimpleDB::LINEAR);
     _checkQuery(_data->queryLinear, _data->errFlags);
@@ -127,19 +108,36 @@ spatialdata::spatialdb::TestSimpleDB::testQueryLinear(void) {
 // Populate database with data.
 void
 spatialdata::spatialdb::TestSimpleDB::_initializeDB(void) {
-    assert(_data);
+    REQUIRE(_data);
+    REQUIRE(_db);
+    REQUIRE(_db->_data);
 
-    SimpleDBData* dbData = new SimpleDBData;
-    dbData->allocate(_data->numLocs, _data->numValues, _data->spaceDim, _data->dataDim);
-    dbData->setData(_data->dbValues, _data->numLocs, _data->numValues);
-    dbData->setCoordinates(_data->dbCoordinates, _data->numLocs, _data->spaceDim);
-    dbData->setNames(_data->names, _data->numValues);
-    dbData->setUnits(_data->units, _data->numValues);
+    _db->_data->allocate(_data->numLocs, _data->numValues, _data->spaceDim, _data->dataDim);
 
-    assert(_db);
-    _db->_data = dbData;
-    _db->_query = new SimpleDBQuery(*_db);
-    _db->_cs = new spatialdata::geocoords::CSCart();
+    std::vector<std::string> names(_data->names, _data->names+_data->numValues);
+    _db->_data->setNames(names);
+
+    std::vector<std::string> units(_data->units, _data->units+_data->numValues);
+    _db->_data->setUnits(units);
+
+    std::shared_ptr<spatialdata::geocoords::CoordSys> cs(new spatialdata::geocoords::CSCart());REQUIRE(cs);
+    _db->_data->setCoordSys(cs);
+
+    _db->_query = std::make_unique<SimpleDBQuery>(*_db->_data.get(), _data->description);
+
+    for (size_t iLoc = 0, iData = 0, iCoords = 0; iLoc < _data->numLocs; ++iLoc) {
+        // data
+        double* const data = _db->_data->getData(iLoc);
+        for (size_t iValue = 0; iValue < _data->numValues; ++iValue) {
+            data[iValue] = _data->dbValues[iData++];
+        } // for
+
+        // coordinates
+        double* const coordinates = _db->_data->getCoordinates(iLoc);
+        for (size_t iDim = 0; iDim < _data->spaceDim; ++iDim) {
+            coordinates[iDim] = _data->dbCoordinates[iCoords++];
+        } // for
+    } // for
 } // _setupDB
 
 
@@ -148,21 +146,19 @@ spatialdata::spatialdb::TestSimpleDB::_initializeDB(void) {
 void
 spatialdata::spatialdb::TestSimpleDB::_checkQuery(const double* queryData,
                                                   const int* flagsE) {
-    assert(queryData);
-    assert(_data);
-    assert(_db);
+    REQUIRE(queryData);
+    REQUIRE(_data);
+    REQUIRE(_db);
 
     // Query values in reverse order for nontrivial test.
     const size_t numValues = _data->numValues;
-
-    const char** queryNames = numValues > 0 ? new const char*[numValues] : NULL;
+    std::vector<std::string> queryNames(numValues);
     for (size_t i = 0; i < numValues; ++i) {
         queryNames[numValues-i-1] = _data->names[i];
     } // for
-    _db->setQueryValues(queryNames, numValues);
-    delete[] queryNames;queryNames = NULL;
+    _db->setQueryValues(queryNames);
 
-    double* values = (numValues > 0) ? new double[numValues] : 0;
+    std::vector<double> values(numValues);
     const double tolerance = 1.0e-06;
 
     const size_t spaceDim = _data->spaceDim;
@@ -172,7 +168,7 @@ spatialdata::spatialdb::TestSimpleDB::_checkQuery(const double* queryData,
     for (size_t iQuery = 0; iQuery < numQueries; ++iQuery) {
         const double* coordinates = &queryData[iQuery*locSize];
         const double* valuesE = &queryData[iQuery*locSize+spaceDim];
-        const int err = _db->query(values, numValues, coordinates, spaceDim, &csCart);
+        const int err = _db->query(values.data(), numValues, coordinates, &csCart);
         if (flagsE) {
             CHECK(flagsE[iQuery] == err);
         } else {
@@ -184,7 +180,6 @@ spatialdata::spatialdb::TestSimpleDB::_checkQuery(const double* queryData,
             CHECK_THAT(values[iVal], Catch::Matchers::WithinAbs(valueE, toleranceV));
         } // for
     } // for
-    delete[] values;values = NULL;
 } // _checkQuery
 
 
@@ -196,25 +191,27 @@ spatialdata::spatialdb::TestSimpleDB_Data::TestSimpleDB_Data(void) :
     numValues(0),
     dataDim(0),
     numQueries(0),
-    dbCoordinates(NULL),
-    dbValues(NULL),
-    names(NULL),
-    units(NULL),
-    queryNearest(NULL),
-    queryLinear(NULL),
-    errFlags(NULL) {}
+    description(nullptr),
+    dbCoordinates(nullptr),
+    dbValues(nullptr),
+    names(nullptr),
+    units(nullptr),
+    queryNearest(nullptr),
+    queryLinear(nullptr),
+    errFlags(nullptr) {}
 
 
 // ------------------------------------------------------------------------------------------------
 spatialdata::spatialdb::TestSimpleDB_Data::~TestSimpleDB_Data(void) {
     // Set members holding static const data to NULL (no deallocation).
-    dbCoordinates = NULL;
-    dbValues = NULL;
-    names = NULL;
-    units = NULL;
-    queryNearest = NULL;
-    queryLinear = NULL;
-    errFlags = NULL;
+    description = nullptr;
+    dbCoordinates = nullptr;
+    dbValues = nullptr;
+    names = nullptr;
+    units = nullptr;
+    queryNearest = nullptr;
+    queryLinear = nullptr;
+    errFlags = nullptr;
 } // destructor
 
 

@@ -49,32 +49,29 @@ TEST_CASE("TestTimeHistoryIO::testReadComments", "[TestTimeHistoryIO]") {
 // Test write(), read().
 void
 spatialdata::spatialdb::TestTimeHistoryIO::testWriteRead(void) {
-    const size_t npts = 6;
-    const double time[npts] = { 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 };
-    const double amplitude[npts] = { 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 };
+    const std::vector<double> time({ 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 });
+    const std::vector<double> amplitude({ 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 });
     const char* timeUnits = "minute";
+    const size_t numPoints = time.size();
 
     const char* filename = "timehistory.dat";
-    TimeHistoryIO::write(time, npts, amplitude, npts, timeUnits, filename);
+    TimeHistoryIO::write(time, amplitude, timeUnits, filename);
 
-    size_t nptsIn = 0;
-    double* timeIn = 0;
-    double* amplitudeIn = 0;
-    TimeHistoryIO::read(&timeIn, &amplitudeIn, &nptsIn, filename);
+    std::vector<double> timeIn;
+    std::vector<double> amplitudeIn;
+    TimeHistoryIO::read(&timeIn, &amplitudeIn, filename);
 
     units::Parser parser;
     const double scale = parser.parse(timeUnits);
     CHECK(scale > 0.0);
 
-    REQUIRE(npts == nptsIn);
+    REQUIRE(numPoints == timeIn.size());
+    REQUIRE(numPoints == amplitudeIn.size());
     const double tolerance = 1.0e-06;
-    for (size_t i = 0; i < npts; ++i) {
+    for (size_t i = 0; i < numPoints; ++i) {
         CHECK_THAT(timeIn[i]/scale, Catch::Matchers::WithinAbs(time[i], tolerance));
         CHECK_THAT(amplitude[i], Catch::Matchers::WithinAbs(amplitudeIn[i], tolerance));
     } // for
-
-    delete[] timeIn;timeIn = 0;
-    delete[] amplitudeIn;amplitudeIn = 0;
 } // testWriteRead
 
 
@@ -82,25 +79,22 @@ spatialdata::spatialdb::TestTimeHistoryIO::testWriteRead(void) {
 // Test read() with time history file that contains comments.
 void
 spatialdata::spatialdb::TestTimeHistoryIO::testReadComments(void) {
-    const size_t npts = 6;
-    const double time[npts] = { 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 };
-    const double amplitude[npts] = { 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 };
+    const std::vector<double> time({ 0.0, 0.2, 0.8, 1.0, 2.0, 10.0 });
+    const std::vector<double> amplitude({ 0.0, 0.4, 1.6, 2.0, 4.0, 0.0 });
     const char* filename = "data/timehistory_comments.dat";
+    const size_t numPoints = time.size();
 
-    size_t nptsIn = 0;
-    double* timeIn = 0;
-    double* amplitudeIn = 0;
-    TimeHistoryIO::read(&timeIn, &amplitudeIn, &nptsIn, filename);
+    std::vector<double> timeIn;
+    std::vector<double> amplitudeIn;
+    TimeHistoryIO::read(&timeIn, &amplitudeIn, filename);
 
-    REQUIRE(npts == nptsIn);
+    REQUIRE(numPoints == timeIn.size());
+    REQUIRE(numPoints == amplitudeIn.size());
     const double tolerance = 1.0e-06;
-    for (size_t i = 0; i < npts; ++i) {
+    for (size_t i = 0; i < numPoints; ++i) {
         CHECK_THAT(timeIn[i], Catch::Matchers::WithinAbs(time[i], tolerance));
         CHECK_THAT(amplitude[i], Catch::Matchers::WithinAbs(amplitudeIn[i], tolerance));
     } // for
-
-    delete[] timeIn;timeIn = 0;
-    delete[] amplitudeIn;amplitudeIn = 0;
 } // testReadComments
 
 
