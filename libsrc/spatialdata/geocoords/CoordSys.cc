@@ -37,14 +37,13 @@ spatialdata::geocoords::CoordSys::~CoordSys(void) {}
 // ----------------------------------------------------------------------
 // Set number of spatial dimensions in coordinate system.
 void
-spatialdata::geocoords::CoordSys::setSpaceDim(const int ndims) {
-    if (ndims < 1) {
+spatialdata::geocoords::CoordSys::setSpaceDim(const size_t spaceDim) {
+    if (spaceDim < 1) {
         std::ostringstream msg;
-        msg
-            << "Number of spatial dimensions (" << ndims << ") must be >= 1.";
+        msg << "Number of spatial dimensions (" << spaceDim << ") must be >= 1.";
         throw std::invalid_argument(msg.str());
     } // if
-    _spaceDim = ndims;
+    _spaceDim = spaceDim;
 } // setSpaceDim
 
 

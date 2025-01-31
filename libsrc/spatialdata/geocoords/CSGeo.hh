@@ -29,12 +29,6 @@ public:
     /// Default destructor
     ~CSGeo(void);
 
-    /** Clone coordinate system.
-     *
-     * @returns Pointer to copy
-     */
-    CoordSys* clone(void) const override;
-
     /** Set string specifying coordinate system.
      *
      * @param[in] value String specifying coordinate system (proj format, WKT, EPSG:XXXX).
@@ -49,9 +43,9 @@ public:
 
     /** Set number of spatial dimensions in coordinate system.
      *
-     * @param ndims Number of dimensions
+     * @param spaceDim Number of dimensions
      */
-    void setSpaceDim(const int ndims) override;
+    void setSpaceDim(const size_t spaceDim) override;
 
     /** Get radial outward direction.
      *
@@ -107,23 +101,13 @@ public:
     virtual
     void unpickle(std::istream& s) override;
 
-protected:
-
-    // PROTECTED METHODS //////////////////////////////////////////////////
-
-    /** Copy constructor
-     *
-     * @param cs Coordinate system to copy
-     */
-    CSGeo(const CSGeo& cs);
-
 private:
 
     // PRIVATE MEMBERS ////////////////////////////////////////////////////
 
     std::string _string; ///< String specifying coordinate system.
     int _spaceDim; ///< Number of spatial dimensions in coordinate system
-    spatialdata::geocoords::Converter* _converter; ///< Converter for coordinate transformations.
+    std::unique_ptr<spatialdata::geocoords::Converter> _converter; ///< Converter for coordinate transformations.
 
 }; // class CSGeo
 

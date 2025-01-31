@@ -36,23 +36,6 @@ spatialdata::geocoords::CSGeoLocal::~CSGeoLocal(void) {}
 
 
 // ----------------------------------------------------------------------
-// Clone coordinate system.
-spatialdata::geocoords::CoordSys*
-spatialdata::geocoords::CSGeoLocal::clone(void) const {
-    return new CSGeoLocal(*this);
-}
-
-
-// ----------------------------------------------------------------------
-// Copy constructor
-spatialdata::geocoords::CSGeoLocal::CSGeoLocal(const CSGeoLocal& cs) :
-    CSGeo(cs),
-    _originX(cs._originX),
-    _originY(cs._originY),
-    _yAzimuth(cs._yAzimuth) {}
-
-
-// ----------------------------------------------------------------------
 // Set parameters specifying local coordinate system.
 void
 spatialdata::geocoords::CSGeoLocal::setLocal(const double originX,
@@ -79,19 +62,19 @@ spatialdata::geocoords::CSGeoLocal::getLocal(double* originX,
 // ----------------------------------------------------------------------
 // Convert coordinates from local coordinate system to geographic coordinate system.
 void
-spatialdata::geocoords::CSGeoLocal::localToGeographic(double* coords,
+spatialdata::geocoords::CSGeoLocal::localToGeographic(double* coordinates,
                                                       const size_t numLocs,
-                                                      const size_t numDims) const {
+                                                      const size_t spaceDim) const {
     const double yAzimuthR = _yAzimuth * M_PI / 180.0;
     const double cosTheta = cos(yAzimuthR);
     const double sinTheta = sin(yAzimuthR);
     for (size_t iLoc = 0; iLoc < numLocs; ++iLoc) {
-        const double localX = coords[iLoc*numDims+0];
-        const double localY = coords[iLoc*numDims+1];
+        const double localX = coordinates[iLoc*spaceDim+0];
+        const double localY = coordinates[iLoc*spaceDim+1];
         const double unrotX = cosTheta * localX + sinTheta * localY;
         const double unrotY = -sinTheta * localX + cosTheta * localY;
-        coords[iLoc*numDims + 0] = _originX + unrotX;
-        coords[iLoc*numDims + 1] = _originY + unrotY;
+        coordinates[iLoc*spaceDim + 0] = _originX + unrotX;
+        coordinates[iLoc*spaceDim + 1] = _originY + unrotY;
     } // for
 }
 
@@ -99,17 +82,17 @@ spatialdata::geocoords::CSGeoLocal::localToGeographic(double* coords,
 // ----------------------------------------------------------------------
 // Convert coordinates from geographic coordinate system to local coordinate system.
 void
-spatialdata::geocoords::CSGeoLocal::geographicToLocal(double* coords,
+spatialdata::geocoords::CSGeoLocal::geographicToLocal(double* coordinates,
                                                       const size_t numLocs,
-                                                      const size_t numDims) const {
+                                                      const size_t spaceDim) const {
     const double yAzimuthR = _yAzimuth * M_PI / 180.0;
     const double cosTheta = cos(yAzimuthR);
     const double sinTheta = sin(yAzimuthR);
     for (size_t iLoc = 0; iLoc < numLocs; ++iLoc) {
-        const double unrotX = coords[iLoc*numDims + 0] - _originX;
-        const double unrotY = coords[iLoc*numDims + 1] - _originY;
-        coords[iLoc*numDims + 0] = cosTheta * unrotX - sinTheta * unrotY;
-        coords[iLoc*numDims + 1] = sinTheta * unrotX + cosTheta * unrotY;
+        const double unrotX = coordinates[iLoc*spaceDim + 0] - _originX;
+        const double unrotY = coordinates[iLoc*spaceDim + 1] - _originY;
+        coordinates[iLoc*spaceDim + 0] = cosTheta * unrotX - sinTheta * unrotY;
+        coordinates[iLoc*spaceDim + 1] = sinTheta * unrotX + cosTheta * unrotY;
     } // for
 }
 

@@ -30,22 +30,7 @@ spatialdata::geocoords::CSCart::CSCart(void) :
 
 // ----------------------------------------------------------------------
 // Default destructor
-spatialdata::geocoords::CSCart::~CSCart(void) {} // destructor
-
-
-// ----------------------------------------------------------------------
-// Copy constructor
-spatialdata::geocoords::CSCart::CSCart(const CSCart& cs) :
-    CoordSys(cs),
-    _toMeters(cs._toMeters) {}
-
-
-// ----------------------------------------------------------------------
-// Clone coordinate system.
-spatialdata::geocoords::CoordSys*
-spatialdata::geocoords::CSCart::clone(void) const {
-    return new CSCart(*this);
-} // clone
+spatialdata::geocoords::CSCart::~CSCart(void) {}
 
 
 // ----------------------------------------------------------------------

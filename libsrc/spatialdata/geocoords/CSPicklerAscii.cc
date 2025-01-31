@@ -38,29 +38,28 @@ spatialdata::geocoords::CSPicklerAscii::pickle(std::ostream& s,
 void
 spatialdata::geocoords::CSPicklerAscii::unpickle(std::istream& s,
                                                  CoordSys** cs) {
-    assert(cs);
-
-    delete *cs;*cs = 0;
+    assert(cs);assert(!*cs);
 
     const int maxIgnore = 128;
-    std::string objname;
+    std::string objectName;
     s.ignore(maxIgnore, '=');
-    s >> objname;
-    if (0 == strcasecmp(objname.c_str(), "cartesian")) {
-        *cs = new CSCart;
-    } else if (0 == strcasecmp(objname.c_str(), "geographic")) {
-        *cs = new CSGeo;
-    } else if (0 == strcasecmp(objname.c_str(), "local-geographic")) {
-        *cs = new CSGeoLocal;
+    s >> objectName;
+    if (0 == strcasecmp(objectName.c_str(), "cartesian")) {
+        *cs = new CSCart();
+    } else if (0 == strcasecmp(objectName.c_str(), "geographic")) {
+        *cs = new CSGeo();
+    } else if (0 == strcasecmp(objectName.c_str(), "local-geographic")) {
+        *cs = new CSGeoLocal();
     } else {
         std::ostringstream msg;
         msg << "Could not parse coordinate system object name '"
-            << objname << "'\n"
+            << objectName << "'\n"
             << "into a known type of coordinate system object.\n"
             << "Known types of coordinate systems:\n"
             << "  'cartesian' and 'geographic'";
         throw std::runtime_error(msg.str().c_str());
     } // else
+    assert(*cs);
     (*cs)->unpickle(s);
 } // unpickle
 

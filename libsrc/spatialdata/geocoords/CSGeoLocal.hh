@@ -29,12 +29,6 @@ public:
     /// Default destructor
     ~CSGeoLocal(void);
 
-    /** Clone coordinate system.
-     *
-     * @returns Pointer to copy
-     */
-    CoordSys* clone(void) const override;
-
     /** Set parameters specifying local coordinate system.
      *
      * @param[in] originX X coordinate of local origin.
@@ -57,23 +51,23 @@ public:
 
     /** Convert coordinates from local coordinate system to geographic coordinate system.
      *
-     * @param[inout] coords Array of coordinates
+     * @param[inout] coordinates Array of coordinates
      * @param[in] numLocs Number of location
-     * @param[in] numDims Number of spatial dimensions in coordinates
+     * @param[in] spaceDim Number of spatial dimensions in coordinates
      */
-    void localToGeographic(double* coords,
+    void localToGeographic(double* coordinates,
                            const size_t numLocs,
-                           const size_t numDims) const override;
+                           const size_t spaceDim) const override;
 
     /** Convert coordinates from geographic coordinate system to local coordinate system.
      *
-     * @param[inout] coords Array of coordinates
+     * @param[inout] coordinates Array of coordinates
      * @param[in] numLocs Number of location
-     * @param[in] numDims Number of spatial dimensions in coordinates
+     * @param[in] spaceDim Number of spatial dimensions in coordinates
      */
-    void geographicToLocal(double* coords,
+    void geographicToLocal(double* coordinates,
                            const size_t numLocs,
-                           const size_t numDims) const override;
+                           const size_t spaceDim) const override;
 
     /** Pickle coordinate system to ascii stream.
      *
@@ -86,16 +80,6 @@ public:
      * @param s Input stream
      */
     void unpickle(std::istream& s) override;
-
-protected:
-
-    // PROTECTED METHODS //////////////////////////////////////////////////
-
-    /** Copy constructor
-     *
-     * @param cs Coordinate system to copy
-     */
-    CSGeoLocal(const CSGeoLocal& cs);
 
 private:
 

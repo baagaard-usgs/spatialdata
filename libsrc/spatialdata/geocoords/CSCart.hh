@@ -25,12 +25,6 @@ public:
     /// Default destructor
     virtual ~CSCart(void);
 
-    /** Clone coordinate system.
-     *
-     * @returns Pointer to copy
-     */
-    virtual CoordSys* clone(void) const;
-
     /** Set scale factor for converting coordinates to SI units (meters).
      *
      * @param scale Scale factor
@@ -47,23 +41,13 @@ public:
      *
      * @param s Output stream
      */
-    virtual void pickle(std::ostream& s) const;
+    virtual void pickle(std::ostream& s) const override;
 
     /** Unpickle coordinate system from ascii stream.
      *
      * @param s Input stream
      */
-    virtual void unpickle(std::istream& s);
-
-protected:
-
-    // PROTECTED METHODS //////////////////////////////////////////////////
-
-    /** Copy constructor
-     *
-     * @param cs Coordinate system to copy
-     */
-    CSCart(const CSCart& cs);
+    virtual void unpickle(std::istream& s) override;
 
 private:
 

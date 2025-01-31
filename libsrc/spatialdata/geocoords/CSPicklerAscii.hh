@@ -21,20 +21,20 @@ public:
     /** Pickle coordinate system.
      *
      * @param s Ouput stream
-     * @param cs Pointer to coordinate system
+     * @param cs Coordinate system
      */
     static
     void pickle(std::ostream& s,
-                const CoordSys* cs);
+                const spatialdata::geocoords::CoordSys* cs);
 
     /** Unpickle coordinate system.
      *
      * @param s Input stream
-     * @param cs Pointer to pointer to coordinate system
+     * @param cs Coordinate system
      */
     static
     void unpickle(std::istream& s,
-                  CoordSys** cs);
+                  spatialdata::geocoords::CoordSys** cs);
 
 }; // class CSPicklerAscii
 

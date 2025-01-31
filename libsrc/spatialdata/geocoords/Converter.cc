@@ -49,6 +49,43 @@ public:
                 }
 
             }; // Cache
+
+            /** Convert coordinates from source geographic coordinate system to
+             * destination geographic coordinate system.
+             *
+             * @param[inout] coordinates Array of coordinates
+             * @param[in] numLocs Number of location
+             * @param[in] spaceDim Number of spatial dimensions in coordinates
+             * @param[in] csDest Destination coordinate system
+             * @param[in] csSrc Source coordinate system
+             * @param[in] cache Cached projection.
+             */
+            static
+            void convert(double* coordinates,
+                         const size_t numLocs,
+                         const size_t spaceDim,
+                         const CSGeo* csDest,
+                         const CSGeo* csSrc,
+                         const std::unique_ptr<Cache>& cache);
+
+            /** Convert coordinates from source Cartesian coordinate system to
+             * destination Cartesian coordinate system.
+             *
+             * @param[inout] coordinates Array of coordinates
+             * @param[in] numLocs Number of location
+             * @param[in] spaceDim Number of spatial dimensions in coordinates
+             * @param[in] csDest Destination coordinate system
+             * @param[in] csSrc Source coordinate system
+             * @param[in] cache Cached projection.
+             */
+            static
+            void convert(double* coordinates,
+                         const size_t numLocs,
+                         const size_t spaceDim,
+                         const CSCart* csDest,
+                         const CSCart* csSrc,
+                         const std::unique_ptr<Cache>& cache);
+
         } // _converter
     } // geocoords
 } // spatialdata
@@ -62,7 +99,7 @@ spatialdata::geocoords::Converter::Converter(void) :
 // ----------------------------------------------------------------------
 // Default destructor
 spatialdata::geocoords::Converter::~Converter(void) {
-    delete _cache;_cache = NULL;
+    _cache.reset();
 } // destructor
 
 
@@ -70,13 +107,13 @@ spatialdata::geocoords::Converter::~Converter(void) {
 // Convert coordinates from source coordinate system to destination
 // coordinate system.
 void
-spatialdata::geocoords::Converter::convert(double* coords,
+spatialdata::geocoords::Converter::convert(double* coordinates,
                                            const size_t numLocs,
-                                           const size_t numDims,
+                                           const size_t spaceDim,
                                            const CoordSys* csDest,
                                            const CoordSys* csSrc) {
-    assert( (0 < numLocs && 0 != coords) ||
-            (0 == numLocs && 0 == coords));
+    assert( (0 < numLocs && 0 != coordinates) ||
+            (0 == numLocs && 0 == coordinates));
     assert(csDest);
     assert(csSrc);
 
@@ -97,14 +134,14 @@ spatialdata::geocoords::Converter::convert(double* coords,
     { // GEOGRAPHIC
         const CSGeo* csGeoDest = dynamic_cast<const CSGeo*>(csDest);
         const CSGeo* csGeoSrc = dynamic_cast<const CSGeo*>(csSrc);
-        _convert(coords, numLocs, numDims, csGeoDest, csGeoSrc);
+        _converter::convert(coordinates, numLocs, spaceDim, csGeoDest, csGeoSrc, _cache);
         break;
     } // GEOGRAPHIC
     case spatialdata::geocoords::CoordSys::CARTESIAN:
     { // CARTESIAN
         const CSCart* csCartDest = dynamic_cast<const CSCart*>(csDest);
         const CSCart* csCartSrc = dynamic_cast<const CSCart*>(csSrc);
-        _convert(coords, numLocs, numDims, csCartDest, csCartSrc);
+        _converter::convert(coordinates, numLocs, spaceDim, csCartDest, csCartSrc, _cache);
         break;
     } // CARTESIAN
     default:
@@ -117,43 +154,44 @@ spatialdata::geocoords::Converter::convert(double* coords,
 // Convert coordinates from source geographic coordinate system to
 // destination geographic coordinate system.
 void
-spatialdata::geocoords::Converter::_convert(double* coords,
+spatialdata::geocoords::_converter::convert(double* coordinates,
                                             const size_t numLocs,
-                                            const size_t numDims,
+                                            const size_t spaceDim,
                                             const CSGeo* csDest,
-                                            const CSGeo* csSrc) {
+                                            const CSGeo* csSrc,
+                                            const std::unique_ptr<Cache>& cache) {
     assert(csDest);
     assert(csSrc);
-    assert( (0 < numLocs && 0 != coords) ||
-            (0 == numLocs && 0 == coords));
+    assert( (0 < numLocs && 0 != coordinates) ||
+            (0 == numLocs && 0 == coordinates));
 
-    double* const x = (numDims >= 2) ? coords + 0 : NULL;
-    double* const y = (numDims >= 2) ? coords + 1 : NULL;
-    double* const z = (numDims >= 3) ? coords + 2 : NULL;
-    const size_t stride = numDims * sizeof(double);
+    double* const x = (spaceDim >= 2) ? coordinates + 0 : NULL;
+    double* const y = (spaceDim >= 2) ? coordinates + 1 : NULL;
+    double* const z = (spaceDim >= 3) ? coordinates + 2 : NULL;
+    const size_t stride = spaceDim * sizeof(double);
 
     bool needsNewProj = false;
-    assert(_cache);
-    if ((0 == _cache->csSrc.length()) || (0 != strcasecmp(_cache->csSrc.c_str(), csSrc->getString()))) { needsNewProj = true; }
-    if ((0 == _cache->csDest.length()) || (0 != strcasecmp(_cache->csDest.c_str(), csDest->getString()))) { needsNewProj = true; }
+    assert(cache);
+    if ((0 == cache->csSrc.length()) || (0 != strcasecmp(cache->csSrc.c_str(), csSrc->getString()))) { needsNewProj = true; }
+    if ((0 == cache->csDest.length()) || (0 != strcasecmp(cache->csDest.c_str(), csDest->getString()))) { needsNewProj = true; }
     if (needsNewProj) {
-        proj_destroy(_cache->proj);
-        _cache->proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, csSrc->getString(), csDest->getString(), NULL);
-        if (!_cache->proj) {
+        proj_destroy(cache->proj);
+        cache->proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, csSrc->getString(), csDest->getString(), NULL);
+        if (!cache->proj) {
             std::stringstream msg;
             msg << "Error creating projection from '" << csSrc->getString() << "' to '" << csDest->getString() << "'.\n"
-                << proj_errno_string(proj_errno(_cache->proj));
+                << proj_errno_string(proj_errno(cache->proj));
             throw std::runtime_error(msg.str());
         } // if
-        _cache->csSrc = csSrc->getString();
-        _cache->csDest = csDest->getString();
+        cache->csSrc = csSrc->getString();
+        cache->csDest = csDest->getString();
     } // if
 
-    csSrc->localToGeographic(coords, numLocs, numDims);
+    csSrc->localToGeographic(coordinates, numLocs, spaceDim);
 
     double t = HUGE_VAL;
     const size_t numSuccessful =
-        proj_trans_generic(_cache->proj, PJ_FWD,
+        proj_trans_generic(cache->proj, PJ_FWD,
                            x, stride, numLocs,
                            y, stride, numLocs,
                            z, stride, numLocs,
@@ -161,11 +199,11 @@ spatialdata::geocoords::Converter::_convert(double* coords,
     if (numSuccessful < numLocs) {
         std::ostringstream msg;
         msg << "Error while converting coordinates:\n"
-            << "  " << proj_errno_string(proj_errno(_cache->proj));
+            << "  " << proj_errno_string(proj_errno(cache->proj));
         throw std::runtime_error(msg.str());
     } // if
 
-    csDest->geographicToLocal(coords, numLocs, numDims);
+    csDest->geographicToLocal(coordinates, numLocs, spaceDim);
 
 } // convert
 
@@ -174,20 +212,21 @@ spatialdata::geocoords::Converter::_convert(double* coords,
 // Convert coordinates from source Cartesian coordinate system to
 // destination Cartesian coordinate system.
 void
-spatialdata::geocoords::Converter::_convert(double* coords,
+spatialdata::geocoords::_converter::convert(double* coordinates,
                                             const size_t numLocs,
-                                            const size_t numDims,
+                                            const size_t spaceDim,
                                             const CSCart* csDest,
-                                            const CSCart* csSrc) {
+                                            const CSCart* csSrc,
+                                            const std::unique_ptr<Cache>& cache) {
     assert(csDest);
     assert(csSrc);
-    assert( (0 < numLocs && 0 != coords) ||
-            (0 == numLocs && 0 == coords));
+    assert( (0 < numLocs && 0 != coordinates) ||
+            (0 == numLocs && 0 == coordinates));
 
-    const int size = numLocs*numDims;
+    const int size = numLocs*spaceDim;
     const double scale = csSrc->getToMeters() / csDest->getToMeters();
     for (int i = 0; i < size; ++i) {
-        coords[i] *= scale;
+        coordinates[i] *= scale;
     } // for
 } // convert
 

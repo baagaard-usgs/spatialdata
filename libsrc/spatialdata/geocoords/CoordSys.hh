@@ -34,17 +34,11 @@ public:
     /// Default destructor
     virtual ~CoordSys(void);
 
-    /** Clone coordinate system.
-     *
-     * @returns Copy of *this
-     */
-    virtual CoordSys* clone(void) const = 0;
-
     /** Set number of spatial dimensions in coordinate system.
      *
-     * @param ndims Number of dimensions
+     * @param spaceDim Number of dimensions
      */
-    virtual void setSpaceDim(const int ndims);
+    virtual void setSpaceDim(const size_t spaceDim);
 
     /** Get number of spatial dimensions in coordinate system.
      *

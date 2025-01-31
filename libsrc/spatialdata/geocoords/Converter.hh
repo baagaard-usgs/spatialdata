@@ -12,6 +12,7 @@
 #include "geocoordsfwd.hh"
 
 #include <cstddef> // USES size_t
+#include <memory> // USES std::shared_ptr
 
 namespace spatialdata {
     namespace geocoords {
@@ -37,57 +38,23 @@ public:
     /** Convert coordinates from source coordinate system to destination
      * coordinate system.
      *
-     * @param[inout] coords Array of coordinates
+     * @param[inout] coordinates Array of coordinates
      * @param[in] numLocs Number of location
-     * @param[in] numDims Number of spatial dimensions in coordinates
+     * @param[in] spaceDim Number of spatial dimensions in coordinates
      * @param[in] csDest Pointer to destination coordinate system
      * @param[in] csSrc Pointer to source coordinate system
      */
-    void convert(double* coords,
+    void convert(double* coordinates,
                  const size_t numLocs,
-                 const size_t numDims,
+                 const size_t spaceDim,
                  const CoordSys* csDest,
                  const CoordSys* csSrc);
 
 private:
 
-    // PRIVATE METHODS ////////////////////////////////////////////////////
-
-    /** Convert coordinates from source geographic coordinate system to
-     * destination geographic coordinate system.
-     *
-     * @param[inout] coords Array of coordinates
-     * @param[in] numLocs Number of location
-     * @param[in] numDims Number of spatial dimensions in coordinates
-     * @param[in] csDest Destination coordinate system
-     * @param[in] csSrc Source coordinate system
-     */
-    void _convert(double* coords,
-                  const size_t numLocs,
-                  const size_t numDims,
-                  const CSGeo* csDest,
-                  const CSGeo* csSrc);
-
-    /** Convert coordinates from source Cartesian coordinate system to
-     * destination Cartesian coordinate system.
-     *
-     * @param[inout] coords Array of coordinates
-     * @param[in] numLocs Number of location
-     * @param[in] numDims Number of spatial dimensions in coordinates
-     * @param[in] csDest Destination coordinate system
-     * @param[in] csSrc Source coordinate system
-     */
-    void _convert(double* coords,
-                  const size_t numLocs,
-                  const size_t numDims,
-                  const CSCart* csDest,
-                  const CSCart* csSrc);
-
-private:
-
     // PRIVATE MEMBERS ////////////////////////////////////////////////////
 
-    _converter::Cache* _cache;
+    std::unique_ptr<_converter::Cache> _cache;
 
 }; // class Converter
 
