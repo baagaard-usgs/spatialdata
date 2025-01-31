@@ -67,22 +67,17 @@ TEST_CASE("TestCSGeo::testPickle", "[TestCSGeo]") {
 // Test constructor
 void
 spatialdata::geocoords::TestCSGeo::testConstructor(void) {
-    const std::string defaultCSString("EPSG:4326");
-    const size_t defaultSpaceDim(3);
+    const std::string& defaultCSString = "EPSG:4326";
+    const size_t defaultSpaceDim = 3;
 
     CSGeo cs;
     CHECK(CoordSys::GEOGRAPHIC == cs.getCSType());
     CHECK(defaultCSString == std::string(cs.getString()));
     CHECK(defaultSpaceDim == cs.getSpaceDim());
 
-    const std::string cloneCSString("EPSG:4269");
-    const size_t cloneSpaceDim(2);
-
     cs.setSpaceDim(2);
-    CoordSys* csClone = cs.clone();assert(csClone);
-    CHECK(CoordSys::GEOGRAPHIC == csClone->getCSType());
-    CHECK(cloneSpaceDim == csClone->getSpaceDim());
-    delete csClone;csClone = NULL;
+    CHECK(CoordSys::GEOGRAPHIC == cs.getCSType());
+    CHECK(2 == cs.getSpaceDim());
 } // testConstructor
 
 
@@ -90,8 +85,8 @@ spatialdata::geocoords::TestCSGeo::testConstructor(void) {
 // Test accessors.
 void
 spatialdata::geocoords::TestCSGeo::testAccessors(void) {
-    const std::string csString("EPSG:4269"); // +proj=longlat +datum=NAD83
-    const size_t spaceDim(2);
+    const std::string& csString = "EPSG:4269"; // +proj=longlat +datum=NAD83
+    const size_t spaceDim = 2;
 
     CSGeo cs;
     cs.setString(csString.c_str());

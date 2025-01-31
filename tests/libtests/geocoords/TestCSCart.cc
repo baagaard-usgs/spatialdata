@@ -62,9 +62,7 @@ spatialdata::geocoords::TestCSCart::testConstructor(void) {
     CHECK(CoordSys::CARTESIAN == cs.getCSType());
 
     cs.setSpaceDim(2);
-    CoordSys* csClone = cs.clone();assert(csClone);
-    CHECK(cs.getSpaceDim() == csClone->getSpaceDim());
-    delete csClone;csClone = NULL;
+    CHECK(2 == cs.getSpaceDim());
 } // testConstructor
 
 

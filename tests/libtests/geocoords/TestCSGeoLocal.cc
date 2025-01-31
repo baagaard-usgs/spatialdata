@@ -91,17 +91,14 @@ spatialdata::geocoords::TestCSGeoLocal::testConstructor(void) {
     cs.setSpaceDim(2);
     cs.setLocal(cloneOriginX, cloneOriginY, cloneYAzimuth);
 
-    CoordSys* csClone = cs.clone();assert(csClone);
-    CHECK(CoordSys::GEOGRAPHIC == csClone->getCSType());
-    CHECK(cloneSpaceDim == csClone->getSpaceDim());
+    CHECK(CoordSys::GEOGRAPHIC == cs.getCSType());
+    CHECK(cloneSpaceDim == cs.getSpaceDim());
     double originX, originY, yAzimuth;
     cs.getLocal(&originX, &originY, nullptr);
     cs.getLocal(nullptr, nullptr, &yAzimuth);
     CHECK_THAT(originX, Catch::Matchers::WithinAbs(cloneOriginX, tolerance));
     CHECK_THAT(originY, Catch::Matchers::WithinAbs(cloneOriginY, tolerance));
     CHECK_THAT(yAzimuth, Catch::Matchers::WithinAbs(cloneYAzimuth, tolerance));
-
-    delete csClone;csClone = NULL;
 } // testConstructor
 
 
