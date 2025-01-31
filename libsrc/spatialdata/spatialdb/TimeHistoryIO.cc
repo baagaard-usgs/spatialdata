@@ -26,19 +26,16 @@
 #include <sstream> // USES std::ostringstream
 
 // ----------------------------------------------------------------------
-const char* spatialdata::spatialdb::TimeHistoryIO::HEADER =
-    "#TIME HISTORY ascii";
+const char* spatialdata::spatialdb::TimeHistoryIO::header = "#TIME HISTORY ascii";
 
 // ----------------------------------------------------------------------
 // Read time history file.
 void
-spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
-                                            double** pamplitude,
-                                            size_t* npts,
-                                            const char* filename) { // read
-    assert(ptime);
-    assert(pamplitude);
-    assert(npts);
+spatialdata::spatialdb::TimeHistoryIO::read(std::vector<double>* time,
+                                            std::vector<double>* amplitude,
+                                            const char* filename) {
+    assert(time);
+    assert(amplitude);
 
     try {
         std::ifstream filein(filename);
@@ -57,15 +54,15 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
         buffer.str(parser.next());
         buffer.clear();
 
-        const int headerLen = strlen(HEADER);
+        const int headerLen = strlen(header);
         std::string hbuffer;
         hbuffer.resize(headerLen+1);
         buffer.read((char*) hbuffer.c_str(), sizeof(char)*headerLen);
         hbuffer[headerLen] = '\0';
-        if (0 != strcasecmp(HEADER, hbuffer.c_str())) {
+        if (0 != strcasecmp(header, hbuffer.c_str())) {
             std::ostringstream msg;
             msg << "Magic header '" << buffer.str() << "' does not match expected header '"
-                << HEADER << "' in time history file '" << filename << "'.\n";
+                << header << "' in time history file '" << filename << "'.\n";
             throw std::runtime_error(msg.str());
         } // if
 
@@ -79,13 +76,14 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
         } // else
 
         std::string timeUnits = "second";
+        int numPoints = 0;
         buffer.str(parser.next());
         buffer.clear();
         buffer >> token;
         while (buffer.good() && token != "}") {
             if (0 == strcasecmp(token.c_str(), "num-points")) {
                 buffer.ignore(maxIgnore, '=');
-                buffer >> *npts;
+                buffer >> numPoints;
             } else if (0 == strcasecmp(token.c_str(), "time-units")) {
                 buffer.ignore(maxIgnore, '=');
                 buffer >> timeUnits;
@@ -105,11 +103,11 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
 
         bool ok = true;
         std::ostringstream msg;
-        if (0 == *npts) {
+        if (0 == numPoints) {
             ok = false;
             msg << "TimeHistory settings must include 'num-points'.\n";
         } // if
-        if (*npts <= 0) {
+        if (numPoints <= 0) {
             ok = false;
             msg << "TimeHistory must contain at least one point.\n";
         } // if
@@ -120,21 +118,19 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
         units::Parser uparser;
         const double scale = uparser.parse(timeUnits.c_str());
 
-        const size_t size = *npts;
+        time->resize(numPoints);
+        amplitude->resize(numPoints);
 
-        double* time = (size > 0) ? new double[size] : 0;
-        double* amplitude = (size > 0) ? new double[size] : 0;
-
-        for (size_t i = 0; i < size; ++i) {
+        for (size_t i = 0; i < numPoints; ++i) {
             buffer.str(parser.next());
             buffer.clear();
-            buffer >> time[i];
-            buffer >> amplitude[i];
-            time[i] *= scale;
+            buffer >> (*time)[i];
+            buffer >> (*amplitude)[i];
+            (*time)[i] *= scale;
         } // for
         // Verify that the time stamps are ordered in time.
-        for (size_t i = 1; i < size; ++i) {
-            if (time[i-1] >= time[i]) {
+        for (size_t i = 1; i < numPoints; ++i) {
+            if ((*time)[i-1] >= (*time)[i]) {
                 throw std::runtime_error("Time history must be ordered in time.");
             } // if
         } // for
@@ -142,9 +138,6 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
         if (!filein.good()) {
             throw std::runtime_error("Unknown error while reading.");
         } // if
-
-        delete[] *ptime;*ptime = time;
-        delete[] *pamplitude;*pamplitude = amplitude;
     } catch (const std::exception& err) {
         std::ostringstream msg;
         msg << "Error occurred while reading time history file '"
@@ -163,22 +156,15 @@ spatialdata::spatialdb::TimeHistoryIO::read(double** ptime,
 // ----------------------------------------------------------------------
 // Read time history file.
 void
-spatialdata::spatialdb::TimeHistoryIO::write(const double* time,
-                                             const size_t nptsT,
-                                             const double* amplitude,
-                                             const size_t nptsA,
+spatialdata::spatialdb::TimeHistoryIO::write(const std::vector<double>& time,
+                                             const std::vector<double>& amplitude,
                                              const char* timeUnits,
-                                             const char* filename) { // write
-    assert( (0 == nptsT && !time) ||
-            (0 < nptsT && time) );
-    assert( (0 == nptsA && !amplitude) ||
-            (0 < nptsA && amplitude) );
-
+                                             const char* filename) {
     try {
-        if (nptsT != nptsA) {
+        if (time.size() != amplitude.size()) {
             std::ostringstream msg;
-            msg << "Number of time stamps (" << nptsT << ") does not match the "
-                << "number of amplitude points (" << nptsA << ").";
+            msg << "Number of time stamps (" << time.size() << ") does not match the "
+                << "number of amplitude points (" << amplitude.size() << ").";
             throw std::invalid_argument(msg.str());
         } // if
 
@@ -189,11 +175,11 @@ spatialdata::spatialdb::TimeHistoryIO::write(const double* time,
             throw std::runtime_error(msg.str());
         } // if
 
-        const size_t npts = nptsA;
+        const size_t numPoints = amplitude.size();
 
-        fileout << HEADER << "\n"
+        fileout << header << "\n"
                 << "TimeHistory {\n"
-                << "  num-points = " << std::setw(6) << npts << "\n"
+                << "  num-points = " << std::setw(6) << numPoints << "\n"
                 << "  time-units = " << timeUnits << "\n"
                 << "}\n";
         if (!fileout.good()) {
@@ -203,7 +189,7 @@ spatialdata::spatialdb::TimeHistoryIO::write(const double* time,
         fileout << std::resetiosflags(std::ios::fixed)
                 << std::setiosflags(std::ios::scientific)
                 << std::setprecision(6);
-        for (size_t i = 0; i < npts; ++i) {
+        for (size_t i = 0; i < numPoints; ++i) {
             fileout << std::setw(14) << time[i]
                     << std::setw(14) << amplitude[i]
                     << "\n";

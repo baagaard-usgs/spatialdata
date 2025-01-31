@@ -12,21 +12,22 @@
 namespace spatialdata {
     namespace spatialdb {
         class OutOfBounds;
+        class ValueNotFound;
 
         class SpatialDB;
+        class Utilities;
+        class UniformDB;
+        class AnalyticDB;
+        class CxxFunctionDB;
         class SimpleDB;
         class SimpleDBData;
         class SimpleDBQuery;
-        class SimpleIO;
-        class SimpleIOAscii;
-        class UniformDB;
-        class AnalyticDB;
+        class SimpleDBIO;
         class SimpleGridDB;
-        class SimpleGridAscii;
-        class UserFunctionDB;
+        class SimpleGridDBData;
+        class SimpleGridDBQuery;
+        class SimpleGridDBIO;
         class CompositeDB;
-        class SCECCVMH;
-        class GocadVoxet;
 
         class GravityField;
 

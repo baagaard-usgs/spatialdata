@@ -31,10 +31,10 @@ class spatialdata::spatialdb::_GravityField {
 public:
 
     static const size_t numValues;
-    static const char* valueNames[3];
+    static const std::vector<std::string> valueNames;
 };
 const size_t spatialdata::spatialdb::_GravityField::numValues = 3;
-const char* spatialdata::spatialdb::_GravityField::valueNames[3] = {
+const std::vector<std::string> spatialdata::spatialdb::_GravityField::valueNames = {
     "gravity_field_x",
     "gravity_field_y",
     "gravity_field_z",
@@ -100,46 +100,36 @@ spatialdata::spatialdb::GravityField::close(void) {
 
 // ----------------------------------------------------------------------
 // Get names of values in spatial database.
-void
-spatialdata::spatialdb::GravityField::getNamesDBValues(const char*** valueNames,
-                                                       size_t* numValues) const {
-    if (valueNames) {
-        *valueNames = (_GravityField::numValues > 0) ? new const char*[_GravityField::numValues] : NULL;
-        for (size_t i = 0; i < _GravityField::numValues; ++i) {
-            (*valueNames)[i] = _GravityField::valueNames[i];
-        } // for
-    }
-    if (numValues) {
-        *numValues = _GravityField::numValues;
-    } // if
+const std::vector<std::string>&
+spatialdata::spatialdb::GravityField::getNamesDBValues(void) const {
+    return _GravityField::valueNames;
 } // getNamesDBValues
 
 
 // ----------------------------------------------------------------------
 // Set values to be returned by queries.
 void
-spatialdata::spatialdb::GravityField::setQueryValues(const char* const* names,
-                                                     const size_t numVals) {
-    if (0 == numVals) {
+spatialdata::spatialdb::GravityField::setQueryValues(const std::vector<std::string>& names) {
+    const size_t numNames = names.size();
+    if (0 == numNames) {
         std::ostringstream msg;
-        msg << "Number of values (" << numVals << ") for query of gravity field spatial database " << getDescription()
-            << "\n must be positive.\n";
+        msg << "Number of values (" << numNames << ") for query of gravity field spatial database " << getDescription()
+            << " must be positive.\n";
         throw std::invalid_argument(msg.str());
-    } else if (numVals > 3) {
+    } else if (numNames > 3) {
         std::ostringstream msg;
-        msg << "Number of values (" << numVals << ") for query of gravity field spatial database " << getDescription()
+        msg << "Number of values (" << numNames << ") for query of gravity field spatial database " << getDescription()
             << "\n must be 1, 2, or 3.\n";
         throw std::invalid_argument(msg.str());
     } // if/else
-    assert(names && 0 < numVals);
 
-    _querySize = numVals;
-    for (size_t iVal = 0; iVal < numVals; ++iVal) {
-        if (0 == strcasecmp(names[iVal], _GravityField::valueNames[0])) {
+    _querySize = numNames;
+    for (size_t iVal = 0; iVal < numNames; ++iVal) {
+        if (0 == strcasecmp(names[iVal].c_str(), _GravityField::valueNames[0].c_str())) {
             _queryValues[iVal] = 0;
-        } else if (0 == strcasecmp(names[iVal], _GravityField::valueNames[1])) {
+        } else if (0 == strcasecmp(names[iVal].c_str(), _GravityField::valueNames[1].c_str())) {
             _queryValues[iVal] = 1;
-        } else if (0 == strcasecmp(names[iVal], _GravityField::valueNames[2])) {
+        } else if (0 == strcasecmp(names[iVal].c_str(), _GravityField::valueNames[2].c_str())) {
             _queryValues[iVal] = 2;
         } else {
             std::ostringstream msg;
@@ -157,38 +147,40 @@ spatialdata::spatialdb::GravityField::setQueryValues(const char* const* names,
 // ----------------------------------------------------------------------
 // Query the database.
 int
-spatialdata::spatialdb::GravityField::query(double* vals,
-                                            const size_t numVals,
-                                            const double* coords,
-                                            const size_t numDims,
-                                            const spatialdata::geocoords::CoordSys* cs) {
-    assert(cs);
+spatialdata::spatialdb::GravityField::query(double* values,
+                                            const size_t numValues,
+                                            const double* coordinates,
+                                            const spatialdata::geocoords::CoordSys* csCoordinates) {
+    assert(!numValues || values);
+    assert(coordinates);
+    assert(csCoordinates);
+    const size_t spaceDim = csCoordinates->getSpaceDim();
 
     if (0 == _querySize) {
         std::ostringstream msg;
         msg << "Values to be returned by spatial database " << getDescription() << "\n"
             << "have not been set. Please call setQueryValues() before query().\n";
         throw std::logic_error(msg.str());
-    } else if (numVals != _querySize) {
+    } else if (numValues != _querySize) {
         std::ostringstream msg;
         msg << "Number of values to be returned by spatial database "
             << getDescription() << "\n"
             << "(" << _querySize << ") does not match size of array provided ("
-            << numVals << ").\n";
+            << numValues << ").\n";
         throw std::logic_error(msg.str());
     } // if
 
-    if (geocoords::CoordSys::CARTESIAN == cs->getCSType()) {
+    if (geocoords::CoordSys::CARTESIAN == csCoordinates->getCSType()) {
         for (size_t i = 0; i < _querySize; ++i) {
-            vals[i] = _acceleration*_gravityDir[_queryValues[i]];
+            values[i] = _acceleration*_gravityDir[_queryValues[i]];
         } // for
     } else {
-        const geocoords::CSGeo* csGeo = dynamic_cast<const geocoords::CSGeo*>(cs);
+        const geocoords::CSGeo* csGeo = dynamic_cast<const geocoords::CSGeo*>(csCoordinates);
         double surfaceNormal[3];
         const int numLocs = 1;
-        csGeo->computeSurfaceNormal(surfaceNormal, coords, numLocs, numDims);
+        csGeo->computeSurfaceNormal(surfaceNormal, coordinates, numLocs, spaceDim);
         for (size_t i = 0; i < _querySize; ++i) {
-            vals[i] = -_acceleration * surfaceNormal[_queryValues[i]];
+            values[i] = -_acceleration * surfaceNormal[_queryValues[i]];
         } // for
     } // if/else
 

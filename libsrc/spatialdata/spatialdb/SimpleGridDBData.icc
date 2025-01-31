@@ -1,0 +1,187 @@
+// =================================================================================================
+// This code is part of SpatialData, developed through the Computational Infrastructure
+// for Geodynamics (https://github.com/geodynamics/spatialdata).
+//
+// Copyright (c) 2010-2025, University of California, Davis and the SpatialData Development Team.
+// All rights reserved.
+//
+// See https://mit-license.org/ and LICENSE.md and for license information.
+// =================================================================================================
+#pragma once
+
+#include <cassert> // USES assert()
+
+// ----------------------------------------------------------------------
+// Get number of locations along x axis;
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getNumX(void) const {
+    return _numX;
+}
+
+
+// ----------------------------------------------------------------------
+// Get number of locations along y axis;
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getNumY(void) const {
+    return _numY;
+}
+
+
+// ----------------------------------------------------------------------
+// Get number of locations along z axis;
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getNumZ(void) const {
+    return _numZ;
+}
+
+
+// ----------------------------------------------------------------------
+// Get dimension of data topology.
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getDataDim(void) const {
+    return _dataDim;
+}
+
+
+// ----------------------------------------------------------------------
+// Get number of values at each location.
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getNumValues(void) const {
+    return _numValues;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along x axis;
+inline
+std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getX(void) {
+    return _x;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along x axis;
+inline
+const std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getX(void) const {
+    return _x;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along y axis;
+inline
+std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getY(void) {
+    return _y;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along y axis;
+inline
+const std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getY(void) const {
+    return _y;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along z axis;
+inline
+std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getZ(void) {
+    return _z;
+}
+
+
+// ----------------------------------------------------------------------
+// Get coordinates along z axis;
+inline
+const std::vector<double>&
+spatialdata::spatialdb::SimpleGridDBData::getZ(void) const {
+    return _z;
+}
+
+
+// ----------------------------------------------------------------------
+// Get names of data values.
+inline
+const std::vector<std::string>&
+spatialdata::spatialdb::SimpleGridDBData::getNames(void) const {
+    return _names;
+} // getNames
+
+
+// ----------------------------------------------------------------------
+// Get coordinate system.
+inline
+spatialdata::geocoords::CoordSys* const
+spatialdata::spatialdb::SimpleGridDBData::getCoordSys(void) const {
+    return _cs.get();
+}
+
+
+// ----------------------------------------------------------------------
+// Get index into data array.
+inline
+size_t
+spatialdata::spatialdb::SimpleGridDBData::getDataIndex(const size_t index0,
+                                                       const size_t size0,
+                                                       const size_t index1,
+                                                       const size_t size1,
+                                                       const size_t index2,
+                                                       const size_t size2) const {
+    // Order points so indexing works in any dimension.
+    const size_t locIndex = index2*size1*size0 + index1*size0 + index0;
+    return locIndex*_numValues;
+} // getDataIndex
+
+
+// ----------------------------------------------------------------------
+// Get index into data array.
+inline
+const double* const
+spatialdata::spatialdb::SimpleGridDBData::getData(const size_t index) const {
+    assert(index < _data.size());
+    return &_data[index];
+}
+
+
+// ----------------------------------------------------------------------
+// Get index into data array.
+inline
+double* const
+spatialdata::spatialdb::SimpleGridDBData::getData(const size_t index) {
+    assert(index < _data.size());
+    return &_data[index];
+}
+
+
+// ----------------------------------------------------------------------
+// Get units of data values.
+inline
+const char*
+spatialdata::spatialdb::SimpleGridDBData::getUnits(const size_t index) const {
+    assert(index < _units.size());
+    return _units[index].c_str();
+}
+
+
+// ----------------------------------------------------------------------
+// Get name of value.
+inline
+const char*
+spatialdata::spatialdb::SimpleGridDBData::getName(const size_t index) const {
+    assert(index < _names.size());
+    return _names[index].c_str();
+}
+
+
+// End of file

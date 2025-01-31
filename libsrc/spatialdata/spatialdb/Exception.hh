@@ -14,22 +14,21 @@
 #include <stdexcept> // ISA std::runtime_error
 
 /// C++ exceptions for spatial database.
-class spatialdata::spatialdb::OutOfBounds : public std::runtime_error { // class OutOfBounds
+
+class spatialdata::spatialdb::OutOfBounds : public std::runtime_error {
 public:
 
-    // PUBLIC METHODS /////////////////////////////////////////////////////
-
-    /** Constructor.
-     *
-     * @msg Error message
-     */
     OutOfBounds(const std::string& msg);
 
 }; // class OutOfBounds
 
-#include "Exception.icc" // inline methods
+class spatialdata::spatialdb::ValueNotFound : public std::runtime_error {
+public:
 
-// version
-// $Id$
+    ValueNotFound(const std::string& msg);
+
+}; // class ValueNotFound
+
+#include "Exception.icc" // inline methods
 
 // End of file

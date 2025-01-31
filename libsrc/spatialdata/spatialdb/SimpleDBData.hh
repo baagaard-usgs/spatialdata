@@ -11,9 +11,12 @@
 
 #include "spatialdbfwd.hh" // forward declarations
 
+#include "spatialdata/geocoords/geocoordsfwd.hh" // HOLDSA CoordSys
+
+#include <memory> // USES std::memory
 #include <string> // USES std::string
 
-class spatialdata::spatialdb::SimpleDBData { // SimpleDBData
+class spatialdata::spatialdb::SimpleDBData {
     friend class TestSimpleDBData; // unit testing
 
 public:
@@ -38,49 +41,8 @@ public:
                   const size_t spaceDim,
                   const size_t dataDim);
 
-    /** Set data values.
-     *
-     * @pre Must call allocate() before setData().
-     *
-     * @param values Array of data values [numLocs*numValues].
-     * @param numLocs Number of locations.
-     * @param numValues Number of values.
-     */
-    void setData(const double* values,
-                 const size_t numLocs,
-                 const size_t numValues);
-
-    /** Set coordinates of locations.
-     *
-     * @pre Must call allocate() before setLocations().
-     *
-     * @param values Array of coordinates of locations [numLocs*spaceDim].
-     * @param numLocs Number of locations.
-     * @param spaceDim Spatial dimension of coordinates.
-     */
-    void setCoordinates(const double* values,
-                        const size_t numLocs,
-                        const size_t spaceDim);
-
-    /** Set names of values.
-     *
-     * @pre Must call allocate() before setNames().
-     *
-     * @param names Array of names of values [numValues].
-     * @param numValues Number of values.
-     */
-    void setNames(const char* const* values,
-                  const size_t numValues);
-
-    /** Set units of values.
-     *
-     * @pre Must call allocate() before setUnits().
-     *
-     * @param units Array of units of values [numValues].
-     * @param numValues Number of values.
-     */
-    void setUnits(const char* const* values,
-                  const size_t numValues);
+    /// Deallocate data.
+    void deallocate(void);
 
     /** Get number of locations for data.
      *
@@ -105,6 +67,40 @@ public:
      * @returns Spatial dimension.
      */
     size_t getSpaceDim(void) const;
+
+    /** Set names of values.
+     *
+     * @pre Must call allocate() before setNames().
+     *
+     * @param names Array of names of values [numValues].
+     */
+    void setNames(const std::vector<std::string>& names);
+
+    /** Get names of values.
+     *
+     * @returns Names of values.
+     */
+    const std::vector<std::string>& getNames(void) const;
+
+    /** Set units of values.
+     *
+     * @pre Must call allocate() before setUnits().
+     *
+     * @param units Array of units of values [numValues].
+     */
+    void setUnits(const std::vector<std::string>& units);
+
+    /** Set coordinate system for spatial database.
+     *
+     * @param[in] cs Coordinate system for spatial database.
+     */
+    void setCoordSys(std::shared_ptr<spatialdata::geocoords::CoordSys>& cs);
+
+    /** Get coordinate system.
+     *
+     * @returns Units of value.
+     */
+    spatialdata::geocoords::CoordSys* const getCoordSys(void) const;
 
     /** Get coordinates of location in database.
      *
@@ -148,18 +144,30 @@ public:
      */
     const char* getUnits(const size_t index) const;
 
+    /** Check compatibility of topology and spatial distribution.
+     *
+     * Currently, this compatiblity check only involves making sure
+     * there are enough number of points to perform the interpolation
+     * corresponding to the topology of the spatial distribution. It
+     * does not check the actual topology of the distribution.
+     */
+    void checkCompatibility(void) const;
+
+    /// Convert values to SI units.
+    void toSI(void);
+
 private:
 
     // PRIVATE METHODS ////////////////////////////////////////////////////
 
-    double* _data; ///< Array of data values.
-    double* _coordinates; ///< Array of coordinates of locations.
-    std::string* _names; ///< Names of data values.
-    std::string* _units; ///< Units of values.
+    std::vector<double> _data; ///< Array of data values.
+    std::vector<double> _coordinates; ///< Array of coordinates of locations.
+    std::vector<std::string> _names; ///< Names of data values.
+    std::vector<std::string> _units; ///< Units of values.
     size_t _numLocs; ///< Number of locations.
     size_t _numValues; ///< Number of values.
     size_t _dataDim; ///< Spatial dimension of data distribution.
-    size_t _spaceDim; ///< Spatial dimension of coordinate locations.
+    std::shared_ptr<spatialdata::geocoords::CoordSys> _cs; ///< Coordinate system
 
 }; // class SpatialDBData
 

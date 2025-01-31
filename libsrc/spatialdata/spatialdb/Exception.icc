@@ -9,13 +9,14 @@
 // =================================================================================================
 #pragma once
 
-// Constructor.
 inline
 spatialdata::spatialdb::OutOfBounds::OutOfBounds(const std::string& msg) :
     std::runtime_error(msg) {}
 
 
-// version
-// $Id$
+inline
+spatialdata::spatialdb::ValueNotFound::ValueNotFound(const std::string& msg) :
+    std::runtime_error(msg) {}
+
 
 // End of file

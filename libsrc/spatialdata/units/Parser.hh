@@ -13,6 +13,9 @@
 
 #include <Python.h>
 
+#include <vector> // USES std::vector
+#include <string> // USES std::string
+
 /// C++ interface to Pyre units parser.
 class spatialdata::units::Parser { // class Parser
     friend class TestParser; // Unit testing
@@ -38,6 +41,19 @@ public:
      * @returns Scaling factor to convert to SI units.
      */
     double parse(const char* units);
+
+    /** Convert values to SI units.
+     *
+     * @param data Array of data [numLocs*numValues].
+     * @param units Units for values [numValues].
+     * @param numLocs Number of locations.
+     * @param numValues Number of values per location.
+     */
+    static
+    void toSI(double* values,
+              const std::vector<std::string>& units,
+              const size_t numLocs,
+              const size_t numValues);
 
 private:
 

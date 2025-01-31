@@ -25,23 +25,21 @@ libspatialdata_la_SOURCES = \
 	geocoords/CSGeoLocal.cc \
 	geocoords/CSPicklerAscii.cc \
 	spatialdb/AnalyticDB.cc \
-	spatialdb/CompositeDB.cc \
-	spatialdb/GocadVoxet.cc \
 	spatialdb/GravityField.cc \
-	spatialdb/SCECCVMH.cc \
-	spatialdb/SimpleGridDB.cc \
 	spatialdb/SimpleDB.cc \
-	spatialdb/SpatialDB.cc \
 	spatialdb/SimpleDBData.cc \
 	spatialdb/SimpleDBQuery.cc \
-	spatialdb/SimpleIO.cc \
-	spatialdb/SimpleIOAscii.cc \
-	spatialdb/SimpleGridAscii.cc \
+	spatialdb/SimpleDBIO.cc \
+	spatialdb/SpatialDB.cc \
+	spatialdb/UniformDB.cc \
+	spatialdb/CxxFunctionDB.cc \
+	spatialdb/SimpleGridDBData.cc \
+	spatialdb/SimpleGridDBIO.cc \
+	spatialdb/SimpleGridDBQuery.cc \
+	spatialdb/CompositeDB.cc \
 	spatialdb/TimeHistory.cc \
 	spatialdb/TimeHistoryIO.cc \
-	spatialdb/UniformDB.cc \
-	spatialdb/UserFunctionDB.cc \
-	spatialdb/cspatialdb.cc	\
+	spatialdb/Utilities.cc \
 	units/Nondimensional.cc \
 	units/Parser.cc \
 	utils/LineParser.cc \
@@ -64,9 +62,5 @@ libspatialdata_la_LIBADD = \
 AM_CPPFLAGS = -I$(top_srcdir)/libsrc
 AM_CPPFLAGS += -DDATADIR=$(pkgdatadir)/geocoords -I$(PYTHON_INCDIR)
 
-
-dist_noinstall = \
-	README.rst \
-	LICENSE
 
 # End of file

@@ -108,4 +108,33 @@ spatialdata::units::Parser::parse(const char* units) {
 } // parse
 
 
+// ----------------------------------------------------------------------
+// Convert values to SI units.
+void
+spatialdata::units::Parser::toSI(double* values,
+                                 const std::vector<std::string>& units,
+                                 const size_t numLocs,
+                                 const size_t numValues) {
+    assert(values);
+
+    Parser parser;
+
+    const char* none = "none";
+    std::vector<double> scales(numValues);
+    for (size_t iVal = 0; iVal < numValues; ++iVal) {
+        if (0 != strcasecmp(none, units[iVal].c_str())) {
+            scales[iVal] = parser.parse(units[iVal].c_str());
+        } else {
+            scales[iVal] = 1.0;
+        } // if/else
+    } // for
+
+    for (size_t iLoc = 0; iLoc < numLocs; ++iLoc) {
+        for (size_t iVal = 0; iVal < numValues; ++iVal) {
+            values[iLoc*numValues+iVal] *= scales[iVal];
+        } // for
+    } // for
+} // toSI
+
+
 // End of file

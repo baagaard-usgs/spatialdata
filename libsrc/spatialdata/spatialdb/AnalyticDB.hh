@@ -23,19 +23,16 @@ public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
 
-    /// Default constructor.
-    AnalyticDB(void);
-
-    /** Constructor with label.
+    /** Constructor with description.
      *
-     * @param label Label of database
+     * @param description Description of database
      */
-    AnalyticDB(const char* label);
+    AnalyticDB(const char* description);
 
     /// Default destructor.
     ~AnalyticDB(void);
 
-    /// Clear values from database.Default destructor.
+    /// Clear values from database.
     void clear(void);
 
     /** Set expressions in database.
@@ -43,67 +40,60 @@ public:
      * @param names Array of names of expressions in database.
      * @param units Array of units for expressions in database.
      * @param expressions Array of expressions in database.
-     * @param numValues Number of expressions in database.
      */
-    void setData(const char* const* names,
-                 const char* const* units,
-                 const char* const* expressions,
-                 const size_t numValues);
+    void setData(const std::vector<std::string>& names,
+                 const std::vector<std::string>& units,
+                 const std::vector<std::string>& expressions);
 
     /** Set coordinate system associated with user functions.
      *
      * @param cs Coordinate system.
      */
-    void setCoordSys(const spatialdata::geocoords::CoordSys& cs);
+    void setCoordSys(const std::shared_ptr<spatialdata::geocoords::CoordSys>& cs);
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void) override;
 
     /** Get names of values in spatial database.
      *
      * @param[out] valueNames Array of names of values.
-     * @param[out] numValues Size of array.
      */
-    void getNamesDBValues(const char*** valueNames,
-                          size_t* numValues) const;
+    const std::vector<std::string>& getNamesDBValues(void) const override;
 
     /** Set values to be returned by queries.
      *
      * @pre Must call open() before setQueryValues()
      *
      * @param names Names of values to be returned in queries
-     * @param numValues Number of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numValues);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
      * @pre Must call open() before query()
      *
-     * @param vals Array for computed values (output from query), vals
+     * @param values Array for computed values (output from query), values
      *   must be allocated BEFORE calling query().
-     * @param numValues Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param csQuery Coordinate system of coordinates
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point for query
+     * @param csCoordinates Coordinate system of coordinates
      *
      * @returns 0 on success, 1 on failure (i.e., could not interpolate
      *   so values set to 0)
      */
-    int query(double* vals,
+    int query(double* values,
               const size_t numValues,
-              const double* coords,
-              const size_t numDims,
-              const spatialdata::geocoords::CoordSys* csQuery);
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
 private:
 
     // PRIVATE METHODS ////////////////////////////////////////////////////
 
+    AnalyticDB(void); ///< Not implemented
     AnalyticDB(const AnalyticDB& data); ///< Not implemented
     const AnalyticDB& operator=(const AnalyticDB& data); ///< Not implemented
 
@@ -111,16 +101,14 @@ private:
 
     // PRIVATE MEMBERS /////////////////////////////////////////////////////
 
-    mu::value_type _expVars[3]; ///< Storage for default expression variables
-    std::string* _names; ///< Names of values in database
-    double* _scales; ///< Scales to convert expressions to SI units.
-    std::string* _expressions; ///< Expressions in database
-    mu::Parser* _parsers; ///< Handle for muParser context
-    geocoords::CoordSys* _cs; ///< Coordinate system
-    geocoords::Converter* _converter; /// Convert query points to local coordinate system.
-    size_t* _queryValues; ///< Indices of values to be returned in queries.
-    size_t _numValues; ///< Number of valuess in database
-    size_t _querySize; ///< Number of values requested to be returned in queries.
+    std::vector<mu::Parser> _parsers; ///< Handle for muParser context
+    std::vector<std::string> _names; ///< Names of values in database
+    std::vector<double> _scales; ///< Scales to convert expressions to SI units.
+    std::vector<std::string> _expressions; ///< Expressions in database
+    std::vector<size_t> _queryIndices; ///< Indices of values to be returned in queries.
+    mu::value_type _expressionVars[3]; ///< Storage for default expression variables
+    std::shared_ptr<spatialdata::geocoords::CoordSys> _cs; ///< Coordinate system
+    std::unique_ptr<spatialdata::geocoords::Converter> _converter; /// Convert query points to local coordinate system.
 
 }; // class AnalyticDB
 

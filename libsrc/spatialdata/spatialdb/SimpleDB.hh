@@ -11,11 +11,10 @@
 
 #include "SpatialDB.hh" // ISA Spatialdb
 
-/// C++ manager for simple spatial database.
-class spatialdata::spatialdb::SimpleDB : public SpatialDB { // class SimpleDB
-    friend class SimpleDBQuery; // helper
+#include <string> // HASA std::string
+
+class spatialdata::spatialdb::SimpleDB : public SpatialDB {
     friend class TestSimpleDB; // unit testing
-    friend class TestSimpleDBQuery; // unit testing
 
 public:
 
@@ -39,14 +38,11 @@ public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
 
-    /// Default constructor.
-    SimpleDB(void);
-
-    /** Constructor with label.
+    /** Constructor with description.
      *
-     * @param label Label of database
+     * @param description Description of database
      */
-    SimpleDB(const char* label);
+    SimpleDB(const char* description);
 
     /// Default destructor.
     ~SimpleDB(void);
@@ -59,60 +55,55 @@ public:
      */
     void setQueryType(const SimpleDB::QueryEnum queryType);
 
-    /** Set the I/O handler.
+    /** Set filename for database.
      *
-     * @param iohandler
+     * @param filename Filename of database
      */
-    void setIOHandler(const SimpleIO* iohandler);
+    void setFilename(const char* filename);
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void) override;
 
     /** Get names of values in spatial database.
      *
-     * @param[out] valueNames Array of names of values.
-     * @param[out] numValues Size of array.
+     * @returns Array of names of values.
      */
-    void getNamesDBValues(const char*** valueNames,
-                          size_t* numValues) const;
+    const std::vector<std::string>& getNamesDBValues(void) const override;
 
     /** Set values to be returned by queries.
      *
      * @pre Must call open() before setQueryValues()
      *
-     * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
+     * @param[in] names Names of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numVals);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
      * @pre Must call open() before query()
      *
-     * @param vals Array for computed values (output from query), vals
+     * @param values Array for computed values (output from query), values
      *   must be allocated BEFORE calling query().
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param pCSQuery Coordinate system of coordinates
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point for query
+     * @param csCoordinates Coordinate system of coordinates
      *
      * @returns 0 on success, 1 on failure (i.e., could not interpolate
      *   so values set to 0)
      */
-    int query(double* vals,
-              const size_t numVals,
-              const double* coords,
-              const size_t numDims,
-              const spatialdata::geocoords::CoordSys* pCSQuery);
+    int query(double* values,
+              const size_t numValues,
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
 private:
 
     // PRIVATE METHODS ////////////////////////////////////////////////////
 
+    SimpleDB(void); ///< Not implemented
     SimpleDB(const SimpleDB& data); ///< Not implemented
     const SimpleDB& operator=(const SimpleDB& data); ///< Not implemented
 
@@ -120,10 +111,9 @@ private:
 
     // PRIVATE MEMBERS /////////////////////////////////////////////////////
 
-    SimpleDBData* _data; ///< Pointer to data
-    SimpleIO* _iohandler; ///< I/O handler
-    SimpleDBQuery* _query; ///< Query handler
-    spatialdata::geocoords::CoordSys* _cs; ///< Coordinate system
+    std::unique_ptr<SimpleDBData> _data; ///< Pointer to data
+    std::unique_ptr<SimpleDBQuery> _query; ///< Query handler
+    std::string _filename;
 
 }; // class SimpleDB
 

@@ -43,50 +43,42 @@ public:
     void setGravityAcc(const double acceleration);
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void)  override;
 
     /** Get names of values in spatial database.
      *
      * @param[out] valueNames Array of names of values.
-     * @param[out] numValues Size of array.
      */
-    void getNamesDBValues(const char*** valueNames,
-                          size_t* numValues) const;
+    const std::vector<std::string>& getNamesDBValues(void) const override;
 
     /** Set values to be returned by queries.
-     *
-     * Valid values for use in names are {'x', 'y', 'z'}.
      *
      * @pre Must call open() before setQueryValues()
      *
      * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numVals);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
      * @pre Must call open() before query()
      *
-     * @param vals Array for computed values (output from query), vals
+     * @param values Array for computed values (output from query), values
      *   must be allocated BEFORE calling query().
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param cs Coordinate system of coordinates
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point for query
+     * @param csCoordinates Coordinate system of coordinates
      *
      * @returns 0 on success, 1 on failure (i.e., could not interpolate
      *   so values set to 0)
      */
-    int query(double* vals,
-              const size_t numVals,
-              const double* coords,
-              const size_t numDims,
-              const spatialdata::geocoords::CoordSys* cs);
+    int query(double* values,
+              const size_t numValues,
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
 private:
 

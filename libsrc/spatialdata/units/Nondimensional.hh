@@ -13,8 +13,7 @@
 
 #include <cstddef> // USES size_t
 
-/// C++ object for managing parameters defining a coordinate system
-class spatialdata::units::Nondimensional { // class Nondimensional
+class spatialdata::units::Nondimensional {
     friend class TestNondimensional; // Unit testing
 
 public:

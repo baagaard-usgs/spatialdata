@@ -11,6 +11,7 @@
 
 #include <cassert> // USES assert()
 
+// ----------------------------------------------------------------------
 // Get number of locations for data.
 inline
 size_t
@@ -19,6 +20,7 @@ spatialdata::spatialdb::SimpleDBData::getNumLocs(void) const {
 }
 
 
+// ----------------------------------------------------------------------
 // Get number of values for data.
 inline
 size_t
@@ -27,6 +29,7 @@ spatialdata::spatialdb::SimpleDBData::getNumValues(void) const {
 }
 
 
+// ----------------------------------------------------------------------
 // Get spatial dimension of data distribution.
 inline
 size_t
@@ -35,32 +38,25 @@ spatialdata::spatialdb::SimpleDBData::getDataDim(void) const {
 }
 
 
-// Get spatial dimension of locations.
+// ----------------------------------------------------------------------
+// Get names of values.
 inline
-size_t
-spatialdata::spatialdb::SimpleDBData::getSpaceDim(void) const {
-    return _spaceDim;
+const std::vector<std::string>&
+spatialdata::spatialdb::SimpleDBData::getNames(void) const {
+    return _names;
 }
 
 
-// Get coordinates of location in database.
+// ----------------------------------------------------------------------
+// Get coordinate system.
 inline
-const double*
-spatialdata::spatialdb::SimpleDBData::getCoordinates(const size_t index) const {
-    assert(index >= 0 && index < _numLocs);
-    return &_coordinates[index*_spaceDim];
+spatialdata::geocoords::CoordSys* const
+spatialdata::spatialdb::SimpleDBData::getCoordSys(void) const {
+    return _cs.get();
 }
 
 
-// Get coordinates of location in database.
-inline
-double*
-spatialdata::spatialdb::SimpleDBData::getCoordinates(const size_t index) {
-    assert(index >= 0 && index < _numLocs);
-    return &_coordinates[index*_spaceDim];
-}
-
-
+// ----------------------------------------------------------------------
 // Get data values at location in database.
 inline
 const double*
@@ -70,6 +66,7 @@ spatialdata::spatialdb::SimpleDBData::getData(const size_t index) const {
 }
 
 
+// ----------------------------------------------------------------------
 // Get data values at location in database.
 inline
 double*
@@ -79,6 +76,7 @@ spatialdata::spatialdb::SimpleDBData::getData(const size_t index) {
 }
 
 
+// ----------------------------------------------------------------------
 // Get name of value.
 inline
 const char*
@@ -88,6 +86,7 @@ spatialdata::spatialdb::SimpleDBData::getName(const size_t index) const {
 }
 
 
+// ----------------------------------------------------------------------
 // Get units of value.
 inline
 const char*

@@ -9,43 +9,33 @@
 // =================================================================================================
 #pragma once
 
-#include "SimpleIO.hh" // ISA SimpleIO
+#include "spatialdata/spatialdb/SimpleDB.hh" // USES SimpleDB
 
 #include <iosfwd> // USES std::istream
 
 // ----------------------------------------------------------------------
-class spatialdata::spatialdb::SimpleIOAscii : public SimpleIO { // SimpleIOAscii
+class spatialdata::spatialdb::SimpleDBIO {
 public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
 
-    // Using default constructor.
-
-    // Using default destructor.
-
-    // Using default copy constructor
-
-    /** Clone object.
-     *
-     * @returns Pointer copy of this.
-     */
-    SimpleIO* clone(void) const;
-
     /** Read the database.
      *
-     * @param pData Database data
-     * @param ppCS Pointer to coordinate system
+     * @param[out] data Database data.
+     * @param[in] filename Name of file.
      */
-    void read(SimpleDBData* pData,
-              spatialdata::geocoords::CoordSys** ppCS);
+    static
+    void read(SimpleDBData* data,
+              const char* filename);
 
     /** Write the database.
      *
-     * @param data Database data
-     * @param pCS Pointer to coordinate system
+     * @param[in] data Database data.
+     * @param[in] filename Name of file.
      */
+    static
     void write(const SimpleDBData& data,
-               const spatialdata::geocoords::CoordSys* pCS);
+               const char* filename);
 
 private:
 
@@ -53,26 +43,19 @@ private:
 
     /** Read database version 1 file.
      *
-     * @param pData Database data
-     * @param ppCS Pointer to coordinate system
-     * @param filein File input stream
+     * @param[out] data Database data.
+     * @param[inout] filein File input stream.
      */
-    static void _readV1(SimpleDBData* pData,
-                        spatialdata::geocoords::CoordSys** ppCS,
-                        std::istream& filein);
+    static
+    void _readV1(SimpleDBData* data,
+                 std::istream& filein);
 
 private:
 
     // PRIVATE MEMBERS ////////////////////////////////////////////////////
 
-    /** Magic header in ascii files */
-    static const char* HEADER;
+    static const char* header; ///< Magic header in file.
 
-}; // class SimpleIOAscii
-
-#include "SimpleIOAscii.icc" // inline methods
-
-// version
-// $Id$
+}; // class SimpleDBIO
 
 // End of file

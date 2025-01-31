@@ -17,41 +17,58 @@
 #include <cassert> // USES assert()
 
 // ----------------------------------------------------------------------
-/// Default constructor
-spatialdata::spatialdb::TimeHistory::TimeHistory(void) :
-    _description(""),
-    _filename(""),
-    _time(0),
-    _amplitude(0),
-    _npts(0),
-    _ilower(0) {}
-
-
-// ----------------------------------------------------------------------
-/// Constructor with label
-spatialdata::spatialdb::TimeHistory::TimeHistory(const char* label) :
-    _description(label),
-    _filename(""),
-    _time(0),
-    _amplitude(0),
-    _npts(0),
+/// Constructor with description
+spatialdata::spatialdb::TimeHistory::TimeHistory(const char* description) :
+    _description(description ? description : "TimeHistory :UNKNOWN:"),
+    _filename(":UNKNOWN:"),
     _ilower(0) {}
 
 
 // ----------------------------------------------------------------------
 /// Default destructor
-spatialdata::spatialdb::TimeHistory::~TimeHistory(void) {
-    delete[] _time;_time = 0;
-    delete[] _amplitude;_amplitude = 0;
-    _npts = 0;
-} // destructor
+spatialdata::spatialdb::TimeHistory::~TimeHistory(void) {} // destructor
+
+
+// ----------------------------------------------------------------------
+// Get description of time history.
+void
+spatialdata::spatialdb::TimeHistory::setDescription(const char* description) {
+    _description = description ? description : "TimeHistory :UNKNOWN:";
+}
+
+
+// ----------------------------------------------------------------------
+// Get description of time history.
+const char*
+spatialdata::spatialdb::TimeHistory::getDescription(void) const {
+    return _description.c_str();
+}
+
+
+// ----------------------------------------------------------------------
+// Set filename for time history.
+void
+spatialdata::spatialdb::TimeHistory::setFilename(const char* filename) {
+    if (!filename) {
+        throw std::logic_error("Null argument to SimpleDB::setFilename().");
+    } // if
+    _filename = filename;
+}
+
+
+// ----------------------------------------------------------------------
+// Set filename for time history.
+const char*
+spatialdata::spatialdb::TimeHistory::getFilename(void) {
+    return _filename.c_str();
+}
 
 
 // ----------------------------------------------------------------------
 // Open the time history and prepare for querying.
 void
 spatialdata::spatialdb::TimeHistory::open(void) {
-    TimeHistoryIO::read(&_time, &_amplitude, &_npts, _filename.c_str());
+    TimeHistoryIO::read(&_time, &_amplitude, _filename.c_str());
     _ilower = 0;
 } // open
 
@@ -60,9 +77,8 @@ spatialdata::spatialdb::TimeHistory::open(void) {
 // Close the time history.
 void
 spatialdata::spatialdb::TimeHistory::close(void) {
-    delete[] _time;_time = 0;
-    delete[] _amplitude;_amplitude = 0;
-    _npts = 0;
+    _time.clear();_time.shrink_to_fit();
+    _amplitude.clear();_amplitude.shrink_to_fit();
 } // close
 
 
@@ -71,10 +87,12 @@ spatialdata::spatialdb::TimeHistory::close(void) {
 int
 spatialdata::spatialdb::TimeHistory::query(double* value,
                                            const double t) {
-    assert(0 != _npts);
+    assert(value);
+    const size_t numPoints = _time.size();
+    assert(_time.size() == _amplitude.size());
 
     *value = 0.0;
-    if (_npts > 1) {
+    if (numPoints > 1) {
         if (t < _time[_ilower]) {
             while (_ilower > 0) {
                 if (t >= _time[_ilower]) {
@@ -83,7 +101,7 @@ spatialdata::spatialdb::TimeHistory::query(double* value,
                 --_ilower;
             } // while
         } else if (t > _time[_ilower+1]) {
-            const size_t imax = _npts-2;
+            const size_t imax = numPoints-2;
             while (_ilower < imax) {
                 if (t <= _time[_ilower+1]) {
                     break;
@@ -92,7 +110,7 @@ spatialdata::spatialdb::TimeHistory::query(double* value,
             } // while
         } // if/else
 
-        assert(_ilower < _npts-1);
+        assert(_ilower < numPoints-1);
         if (( t >= _time[_ilower]) && ( t <= _time[_ilower+1]) ) {
             const double tL = _time[_ilower];
             const double tU = _time[_ilower+1];
@@ -114,7 +132,7 @@ spatialdata::spatialdb::TimeHistory::query(double* value,
 // Query the database.
 int
 spatialdata::spatialdb::TimeHistory::query(float* value,
-                                           const float t) { // query
+                                           const float t) {
     double valueD = 0.0;
     const double tD = t;
 

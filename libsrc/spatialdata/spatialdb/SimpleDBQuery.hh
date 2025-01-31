@@ -17,18 +17,20 @@
 #include <vector> // USES std::vector
 
 // ----------------------------------------------------------------------
-class spatialdata::spatialdb::SimpleDBQuery { // class SimpleDBQuery
+class spatialdata::spatialdb::SimpleDBQuery {
     friend class TestSimpleDBQuery;
 
 public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
 
-    /** Default constructor.
+    /** Constructor
      *
-     * @param db Database
+     * @param[in] data Spatial database data.
+     * @param[in] description Spatial database description.
      */
-    SimpleDBQuery(const SimpleDB& db);
+    SimpleDBQuery(const SimpleDBData& data,
+                  const char* description);
 
     /// Default destructor.
     ~SimpleDBQuery(void);
@@ -45,34 +47,30 @@ public:
     /** Set values to be returned by queries.
      *
      * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numVals);
+    void setQueryValues(const std::vector<std::string>& names);
 
     /** Query the database.
      *
-     * @param vals Array for computed values (output from query)
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point to query
-     * @param numDims Number of dimensions for coordinates
-     * @param pCSQuery Coordinate system of coordinates
+     * @param values Array for computed values (output from query)
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point to query
+     * @param csCoordinates Coordinate system of coordinates
      */
-    void query(double* vals,
-               const size_t numVals,
-               const double* coords,
-               const size_t numDims,
-               const spatialdata::geocoords::CoordSys* pCSQuery);
+    void query(double* values,
+               const size_t numValues,
+               const double* coordinates,
+               const spatialdata::geocoords::CoordSys* csCoordinates);
 
 private:
 
     // PRIVATE STRUCT /////////////////////////////////////////////////////
 
     /** Interpolation weighting information */
-    struct WtStruct {
+    struct Weighting {
         double wt; ///< Weight for location
-        size_t nearIndex; ///< Index into nearest
-    }; // struct WtStruct
+        size_t i_near; ///< Index into nearest
+    }; // struct Weighting
 
 private:
 
@@ -84,29 +82,29 @@ private:
      * database.
      *
      * @param values Array for computed values (output from query)
-     * @param numVals Number of values expected (size of pVals array)
+     * @param numValues Number of values expected (size of values array)
      */
-    void _queryNearest(double* vals,
-                       const size_t numVals);
+    void _queryNearest(double* values,
+                       const size_t numValues);
 
     /** Query database using linear interpolation algorithm.
      *
      * Values at location are interpolation from locations in database.
      *
-     * @param vals Array for computed values (output from query)
-     * @param numVals Number of values expected (size of pVals array)
+     * @param values Array for computed values (output from query)
+     * @param numValues Number of values expected (size of values array)
      */
-    void _queryLinear(double* vals,
-                      const size_t numVals);
+    void _queryLinear(double* values,
+                      const size_t numValues);
 
     /// Find locations in database nearest query location.
     void _findNearest(void);
 
     /** Get interpolation weighting functions for query.
      *
-     * @param pWeights Pointer to array of interpolation weights
+     * @param weights Pointer to array of interpolation weights
      */
-    void _getWeights(std::vector<WtStruct>* pWeights);
+    void _getWeights(std::vector<Weighting>* weights);
 
     /** Get interpolation weighting functions for point interpolation.
      *
@@ -114,38 +112,38 @@ private:
      * trivial. Instead it is used with the other topologies to build up
      * interpolation to the higher dimensions.
      *
-     * @param pWeights Pointer to array of interpolation weights
+     * @param weights Pointer to array of interpolation weights
      */
-    void _findPointPt(std::vector<WtStruct>* pWeights);
+    void _findPointPoint(std::vector<Weighting>* weights);
 
     /** Get interpolation weighting functions for linear interpolation.
      *
-     * @param pWeights Pointer to array of interpolation weights
+     * @param weights Pointer to array of interpolation weights
      */
-    void _findLinePt(std::vector<WtStruct>* pWeights);
+    void _findLinePoint(std::vector<Weighting>* weights);
 
     /** Get interpolation weighting functions for areal interpolation.
      *
-     * @param pWeights Pointer to array of interpolation weights
+     * @param weights Pointer to array of interpolation weights
      */
-    void _findAreaPt(std::vector<WtStruct>* pWeights);
+    void _findAreaPoint(std::vector<Weighting>* weights);
 
     /** Get interpolation weighting functions for volumetric interpolation.
      *
-     * @param pWeights Pointer to array of interpolation weights
+     * @param weights Pointer to array of interpolation weights
      */
-    void _findVolumePt(std::vector<WtStruct>* pWeights);
+    void _findVolumePoint(std::vector<Weighting>* weights);
 
-    /** Set coordiantes of point in 3-D space using coordinates in
+    /** Set coordinates of point in 3-D space using coordinates in
      * current coordinate system.
      *
-     * @param pt3 Coordinates of point in 3-D space [output].
-     * @param pt Cooridinates of point in current coordinate sytem.
+     * @param point3 Coordinates of point in 3D space [output].
+     * @param point Coordinates of point in current coordinate system.
      * @param spaceDim Spatial dimension of current coordinate system.
      */
     static
-    void _setPoint3(double* const pt3,
-                    const double* pt,
+    void _setPoint3(double* const point3,
+                    const double* point,
                     const size_t spaceDim);
 
     /** Compute square of distance between points A and B.
@@ -185,14 +183,14 @@ private:
 
     // PRIVATE MEMBERS ////////////////////////////////////////////////////
 
-    double _q[3]; ///< Location of query.
+    const SimpleDBData& _data; ///< Reference to simple database.
+    std::string _description; ///< Reference to simple database description.
+
+    double _queryPoint[3]; ///< Location of query.
     SimpleDB::QueryEnum _queryType; ///< Query type.
     std::vector<size_t> _nearest; ///< Index of nearest points in database to location.
-    const SimpleDB& _db; ///< Reference to simple database.
-    spatialdata::geocoords::Converter* _converter; ///< Covert query points to local coordinate system.
-
-    size_t* _queryValues; ///< Indices of values to be returned in queries.
-    size_t _querySize; ///< Nmber of values to be returned in queries.
+    std::vector<size_t> _queryIndices; ///< Indices of values to be returned in queries.
+    std::unique_ptr<spatialdata::geocoords::Converter> _converter; ///< Covert query points to local coordinate system.
 
 }; // class SimpleDBQuery
 

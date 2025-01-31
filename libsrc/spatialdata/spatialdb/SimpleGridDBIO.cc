@@ -10,13 +10,10 @@
 
 #include <portinfo>
 
-#include "SimpleGridAscii.hh" // implementation of class methods
+#include "spatialdata/spatialdb/SimpleGridDBIO.hh" // implementation of class methods
 
-#include "SpatialDB.hh" // USES SimpleDB
-#include "SimpleDB.hh" // USES SimpleDB
+#include "spatialdata/spatialdb/SimpleGridDBData.hh" // USES SimpleGridDBData
 
-#include "SimpleDBData.hh" // USES SimpleDBData
-#include "spatialdata/geocoords/CoordSys.hh" // USES CSCart
 #include "spatialdata/geocoords/CSCart.hh" // USES CSCart
 #include "spatialdata/geocoords/CSPicklerAscii.hh" // USES CSPicklerAscii
 
@@ -33,42 +30,42 @@
 #include <sstream> // USES std::ostringsgream
 #include <strings.h> // USES strcasecmp()
 #include <cstring> // USES strlen()
-#include <assert.h> // USES assert()
+#include <cassert> // USES assert()
 
 // ----------------------------------------------------------------------
-const char* spatialdata::spatialdb::SimpleGridAscii::FILEHEADER = "#SPATIAL_GRID.ascii";
+const char* spatialdata::spatialdb::SimpleGridDBIO::header = "#SPATIAL_GRID.ascii";
 
 // ----------------------------------------------------------------------
 // Read ascii database file.
 void
-spatialdata::spatialdb::SimpleGridAscii::read(SimpleGridDB* db) { // read
-    assert(db);
+spatialdata::spatialdb::SimpleGridDBIO::read(SimpleGridDBData* data,
+                                             const char* filename) {
+    assert(data);
 
     try {
-        std::ifstream filein(db->_filename.c_str());
+        std::ifstream filein(filename);
         if (!filein.is_open() || !filein.good()) {
             std::ostringstream msg;
-            msg << "Could not open spatial database file '" << db->_filename
+            msg << "Could not open spatial database file '" << filename
                 << "' for reading.\n";
             throw std::runtime_error(msg.str());
         } // if
 
-        _readHeader(filein, db);
-        _readData(filein, db);
+        _readHeader(data, filein);
+        _readData(data, filein);
 
         if (!filein.good()) {
             throw std::runtime_error("Unknown error while reading.");
-        }
-
+        } // if
         filein.close();
     } catch (const std::exception& err) {
         std::ostringstream msg;
-        msg << "Error occurred while reading spatial database file '" << db->_filename << "'.\n"
+        msg << "Error occurred while reading spatial database file '" << filename << "'.\n"
             << err.what();
         throw std::runtime_error(msg.str());
     } catch (...) {
         std::ostringstream msg;
-        msg << "Unknown error occurred while reading spatial database file '" << db->_filename << "'.\n";
+        msg << "Unknown error occurred while reading spatial database file '" << filename << "'.\n";
         throw std::runtime_error(msg.str());
     } // try/catch
 } // read
@@ -77,18 +74,19 @@ spatialdata::spatialdb::SimpleGridAscii::read(SimpleGridDB* db) { // read
 // ----------------------------------------------------------------------
 // Write ascii database file.
 void
-spatialdata::spatialdb::SimpleGridAscii::write(const SimpleGridDB& db) { // write
+spatialdata::spatialdb::SimpleGridDBIO::write(const SimpleGridDBData& data,
+                                              const char* filename) {
     try {
-        std::ofstream fileout(db._filename.c_str());
+        std::ofstream fileout(filename);
         if (!fileout.is_open() || !fileout.good()) {
             std::ostringstream msg;
-            msg << "Could not open spatial database file '" << db._filename
+            msg << "Could not open spatial database file '" << filename
                 << "' for writing.\n";
             throw std::runtime_error(msg.str());
         } // if
 
-        _writeHeader(fileout, db);
-        _writeData(fileout, db);
+        _writeHeader(data, fileout);
+        _writeData(data, fileout);
 
         if (!fileout.good()) {
             throw std::runtime_error("Unknown error while writing.");
@@ -97,12 +95,12 @@ spatialdata::spatialdb::SimpleGridAscii::write(const SimpleGridDB& db) { // writ
         fileout.close();
     } catch (const std::exception& err) {
         std::ostringstream msg;
-        msg << "Error occurred while writing spatial database file '" << db._filename << "'.\n"
+        msg << "Error occurred while writing spatial database file '" << filename << "'.\n"
             << err.what();
         throw std::runtime_error(msg.str());
     } catch (...) {
         std::ostringstream msg;
-        msg << "Unknown error occurred while writing spatial database file '" << db._filename << "'.\n";
+        msg << "Unknown error occurred while writing spatial database file '" << filename << "'.\n";
         throw std::runtime_error(msg.str());
     } // try/catch
 } // write
@@ -111,11 +109,11 @@ spatialdata::spatialdb::SimpleGridAscii::write(const SimpleGridDB& db) { // writ
 // ----------------------------------------------------------------------
 // Read data file header.
 void
-spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
-                                                     SimpleGridDB* const db) { // _readHeader
-    assert(db);
+spatialdata::spatialdb::SimpleGridDBIO::_readHeader(SimpleGridDBData* data,
+                                                    std::istream& filein) {
+    assert(data);
 
-    utils::LineParser parser(filein, "//");
+    spatialdata::utils::LineParser parser(filein, "//");
     parser.eatwhitespace(true);
 
     std::istringstream buffer;
@@ -123,16 +121,16 @@ spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
     buffer.str(parser.next());
     buffer.clear();
 
-    const int headerLen = strlen(FILEHEADER);
+    const int headerLen = strlen(header);
     std::string hbuffer;
     hbuffer.resize(headerLen+1);
     buffer.read((char*) hbuffer.c_str(), sizeof(char)*headerLen);
     hbuffer[headerLen] = '\0';
-    if (0 != strcasecmp(FILEHEADER, hbuffer.c_str())) {
+    if (0 != strcasecmp(header, hbuffer.c_str())) {
         std::ostringstream msg;
         msg
             << "Magic header '" << buffer.str() << "' does not match expected header '"
-            << FILEHEADER << "' in spatial database file '" << db->_filename << "'.\n";
+            << header << " in SimpleGrid spatial database file.";
         throw std::runtime_error(msg.str());
     } // if
 
@@ -148,16 +146,13 @@ spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
         throw std::runtime_error(msg.str());
     } // else
 
-    db->_numX = 0;
-    db->_numY = 0;
-    db->_numZ = 0;
-    delete[] db->_x;db->_x = NULL;
-    delete[] db->_y;db->_y = NULL;
-    delete[] db->_z;db->_z = NULL;
-
-    db->_numValues = 0;
-    delete[] db->_names;db->_names = NULL;
-    delete[] db->_units;db->_units = NULL;
+    size_t numX = 0;
+    size_t numY = 0;
+    size_t numZ = 0;
+    size_t spaceDim = 0; // deprecated
+    size_t numValues = 0;
+    std::vector<std::string> names;
+    std::vector<std::string> units;
 
     buffer.str(parser.next());
     buffer.clear();
@@ -165,40 +160,40 @@ spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
     while (buffer.good() && token != "}") {
         if (0 == strcasecmp(token.c_str(), "num-x")) {
             buffer.ignore(maxIgnore, '=');
-            buffer >> db->_numX;
+            buffer >> numX;
         } else if (0 == strcasecmp(token.c_str(), "num-y")) {
             buffer.ignore(maxIgnore, '=');
-            buffer >> db->_numY;
+            buffer >> numY;
         } else if (0 == strcasecmp(token.c_str(), "num-z")) {
             buffer.ignore(maxIgnore, '=');
-            buffer >> db->_numZ;
+            buffer >> numZ;
         } else if (0 == strcasecmp(token.c_str(), "space-dim")) {
             buffer.ignore(maxIgnore, '=');
-            buffer >> db->_spaceDim;
+            buffer >> spaceDim;
         } else if (0 == strcasecmp(token.c_str(), "num-values")) {
             buffer.ignore(maxIgnore, '=');
-            buffer >> db->_numValues;
+            buffer >> numValues;
         } else if (0 == strcasecmp(token.c_str(), "value-names")) {
-            if (db->_numValues > 0) {
-                db->_names = new std::string[db->_numValues];
+            if (numValues > 0) {
+                names.resize(numValues);
             } else {
                 throw std::runtime_error("Number of values must be specified BEFORE "
                                          "names of values in SimpleGridDB file.");
             }
             buffer.ignore(maxIgnore, '=');
-            for (size_t iVal = 0; iVal < db->_numValues; ++iVal) {
-                buffer >> db->_names[iVal];
+            for (size_t iValue = 0; iValue < numValues; ++iValue) {
+                buffer >> names[iValue];
             } // for
         } else if (0 == strcasecmp(token.c_str(), "value-units")) {
-            if (db->_numValues > 0) {
-                db->_units = new std::string[db->_numValues];
+            if (numValues > 0) {
+                units.resize(numValues);
             } else {
                 throw std::runtime_error("Number of values must be specified BEFORE "
                                          "units of values in SimpleGridDB file.");
             } // if/else
             buffer.ignore(maxIgnore, '=');
-            for (size_t iVal = 0; iVal < db->_numValues; ++iVal) {
-                buffer >> db->_units[iVal];
+            for (size_t iValue = 0; iValue < numValues; ++iValue) {
+                buffer >> units[iValue];
             } // for
         } else if (0 == strcasecmp(token.c_str(), "cs-data")) {
             buffer.ignore(maxIgnore, '=');
@@ -213,7 +208,10 @@ spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
                 } // if
             } // while
             filein.clear();
-            spatialdata::geocoords::CSPicklerAscii::unpickle(filein, &db->_cs);
+            spatialdata::geocoords::CoordSys* cs = nullptr;
+            spatialdata::geocoords::CSPicklerAscii::unpickle(filein, &cs);
+            std::shared_ptr<spatialdata::geocoords::CoordSys> csShared(cs);
+            data->setCoordSys(csShared);
         } else {
             std::ostringstream msg;
             msg << "Could not parse '" << token << "' into a SimpleGridDB setting.";
@@ -227,71 +225,73 @@ spatialdata::spatialdb::SimpleGridAscii::_readHeader(std::istream& filein,
     if (( token != "}") || !filein.good()) {
         throw std::runtime_error("I/O error while parsing SimpleGridDB settings.");
     }
+    spaceDim = data->getSpaceDim();
 
     bool ok = true;
     std::ostringstream msg;
-    if (db->_numValues <= 0) {
+    if (numValues <= 0) {
         ok = false;
         msg << "SimpleGridDB settings must include 'num-values'.\n";
     } // if
-    if (db->_spaceDim <= 0) {
+    if (spaceDim <= 0) {
         ok = false;
         msg << "SimpleGridDB settings must include positive 'space-dim'.\n";
     } // if
 
-    if (( db->_spaceDim > 0) && ( db->_numX <= 0) ) {
+    if (( spaceDim > 0) && ( numX <= 0) ) {
         ok = false;
         msg << "SimpleGridDB settings must include 'num-x'.\n";
     } // if
-    if (( db->_spaceDim > 1) && ( db->_numY <= 0) ) {
+    if (( spaceDim > 1) && ( numY <= 0) ) {
         ok = false;
         msg << "SimpleGridDB settings must include 'num-y' with 2-D and 3-D data.\n";
     } // if
-    if (( db->_spaceDim > 2) && ( db->_numZ <= 0) ) {
+    if (( spaceDim > 2) && ( numZ <= 0) ) {
         ok = false;
         msg << "SimpleGridDB settings must include 'num-z' with 3-D data.\n";
     } // if
-    if (!db->_names) {
+    if (0 == names.size()) {
         ok = false;
         msg << "SimpleGridDB settings must include 'value-names'.\n";
     } // if
-    if (!db->_units) {
+    if (0 == units.size()) {
         ok = false;
         msg << "SimpleGridDB settings must include 'value-units'.\n";
     } // if
+
     if (!ok) {
         throw std::runtime_error(msg.str());
-    }
+    } // if
 
     // Set data dimension based on dimensions of data.
-    db->_dataDim = 0;
-    if (db->_numX > 1) {
-        db->_dataDim += 1;
+    size_t dataDim = 0;
+    if (numX > 1) {
+        dataDim += 1;
     } // if
-    if (db->_numY > 1) {
-        db->_dataDim += 1;
+    if (numY > 1) {
+        dataDim += 1;
     } // if
-    if (db->_numZ > 1) {
-        db->_dataDim += 1;
+    if (numZ > 1) {
+        dataDim += 1;
     } // if
+
+    data->allocate(numX, numY, numZ, numValues, spaceDim, dataDim);
+    data->setNames(names);
+    data->setUnits(units);
+    data->checkCompatibility();
 } // _readHeader
 
 
 // ----------------------------------------------------------------------
 // Read data values.
 void
-spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
-                                                   SimpleGridDB* const db) {
-    delete[] db->_x;db->_x = 0;
-    delete[] db->_y;db->_y = 0;
-    delete[] db->_z;db->_z = 0;
-    delete[] db->_data;db->_data = 0;
-
-    const int numX = db->_numX;
-    const int numY = db->_numY;
-    const int numZ = db->_numZ;
-    const int numValues = db->_numValues;
-    const int spaceDim = db->_spaceDim;
+spatialdata::spatialdb::SimpleGridDBIO::_readData(SimpleGridDBData* data,
+                                                  std::istream& filein) {
+    const int numX = data->getNumX();
+    const int numY = data->getNumY();
+    const int numZ = data->getNumZ();
+    const int numValues = data->getNumValues();
+    const int spaceDim = data->getSpaceDim();
 
     const int bufsize = 32768;
     utils::LineParser parser(filein, "//", bufsize);
@@ -301,13 +301,15 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
 
     const bool _verbose = false;
 
-    int numLocs = 1;
+    size_t numLocs = 1;
     if (numX >= 1) {
         if (_verbose) {
             std::cout << "Using " << numX << " coordinates in x-direction.\n";
         } // if
         numLocs *= numX;
-        db->_x = new double[numX];
+
+        std::vector<double>& coordinates = data->getX();
+        assert(coordinates.size() == numX);
         buffer.str(parser.next());
         buffer.clear();
         for (int i = 0; i < numX; ++i) {
@@ -316,16 +318,9 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
                 msg << "Error reading x-coordinates from buffer '" << buffer.str() << "'.";
                 throw std::runtime_error(msg.str());
             } // if
-            buffer >> db->_x[i];
+            buffer >> coordinates[i];
         } // for
-        std::vector<double> xVec(numX);
-        for (int i = 0; i < numX; ++i) {
-            xVec[i] = db->_x[i];
-        }
-        std::sort(xVec.begin(), xVec.end());
-        for (int i = 0; i < numX; ++i) {
-            db->_x[i] = xVec[i];
-        } // for
+        std::sort(coordinates.begin(), coordinates.end());
     } // if
 
     if (numY >= 1) {
@@ -333,7 +328,9 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
             std::cout << "Using " << numY << " coordinates in y-direction.\n";
         } // if
         numLocs *= numY;
-        db->_y = new double[numY];
+
+        std::vector<double>& coordinates = data->getY();
+        assert(coordinates.size() == numY);
         buffer.str(parser.next());
         buffer.clear();
         for (int i = 0; i < numY; ++i) {
@@ -342,16 +339,9 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
                 msg << "Error reading y-coordinates from buffer '" << buffer.str() << "'.";
                 throw std::runtime_error(msg.str());
             } // if
-            buffer >> db->_y[i];
+            buffer >> coordinates[i];
         } // for
-        std::vector<double> yVec(numY);
-        for (int i = 0; i < numY; ++i) {
-            yVec[i] = db->_y[i];
-        }
-        std::sort(yVec.begin(), yVec.end());
-        for (int i = 0; i < numY; ++i) {
-            db->_y[i] = yVec[i];
-        }
+        std::sort(coordinates.begin(), coordinates.end());
     } // if
 
     if (numZ >= 1) {
@@ -359,7 +349,9 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
             std::cout << "Using " << numZ << " coordinates in z-direction.\n";
         } // if
         numLocs *= numZ;
-        db->_z = new double[numZ];
+
+        std::vector<double>& coordinates = data->getZ();
+        assert(coordinates.size() == numZ);
         buffer.str(parser.next());
         buffer.clear();
         for (int i = 0; i < numZ; ++i) {
@@ -368,23 +360,15 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
                 msg << "Error reading z-coordinates from buffer '" << buffer.str() << "'.";
                 throw std::runtime_error(msg.str());
             } // if
-            buffer >> db->_z[i];
+            buffer >> coordinates[i];
         } // for
-        std::vector<double> zVec(numZ);
-        for (int i = 0; i < numZ; ++i) {
-            zVec[i] = db->_z[i];
-        }
-        std::sort(zVec.begin(), zVec.end());
-        for (int i = 0; i < numZ; ++i) {
-            db->_z[i] = zVec[i];
-        }
+        std::sort(coordinates.begin(), coordinates.end());
     } // if
 
     assert(numLocs > 0);
     assert(numValues > 0);
-    db->_data = new double[numLocs*db->_numValues];
     assert(spaceDim > 0);
-    double* coords = new double[spaceDim];
+    double coordinates[3];
     int count = 0;
     for (int iLoc = 0; iLoc < numLocs; ++iLoc, ++count) {
         buffer.str(parser.next());
@@ -396,21 +380,21 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
                     << "Error reading coordinates from buffer '" << buffer.str() << "'.";
                 throw std::runtime_error(msg.str());
             } // if
-            buffer >> coords[iDim];
+            buffer >> coordinates[iDim];
         } // for
 
-        const int indexData = db->_getDataIndex(coords, spaceDim);
-        for (size_t iVal = 0; iVal < db->_numValues; ++iVal) {
+        const int i_data = data->getDataIndex(coordinates, spaceDim);
+        double* const dataLoc = data->getData(i_data);
+        for (size_t iValue = 0; iValue < numValues; ++iValue) {
             if (!buffer.good()) {
                 std::ostringstream msg;
                 msg << "Read data for " << count << " out of " << numLocs << " points.\n"
                     << "Error reading data from buffer '" << buffer.str() << "'.";
                 throw std::runtime_error(msg.str());
             } // if
-            buffer >> db->_data[indexData+iVal];
+            buffer >> dataLoc[iValue];
         } // for
     } // for
-    delete[] coords;coords = 0;
     if (_verbose) {
         std::cout << "Read " << count << " lines of data.\n";
     } // if
@@ -426,56 +410,40 @@ spatialdata::spatialdb::SimpleGridAscii::_readData(std::istream& filein,
         throw std::runtime_error(msg.str());
     } // if
 
-    // Set dimensions without any data to 0.
-    if (0 == db->_numX) {
-        db->_numX = 0;
-    } // if
-    if (0 == db->_numY) {
-        db->_numY = 0;
-    } // if
-    if (0 == db->_numZ) {
-        db->_numZ = 0;
-    } // if
-
-    // Check compatibility of dimension of data, spatial dimension and
-    // number of points
-    db->_checkCompatibility();
+    data->toSI();
 } // _readData
 
 
 // ----------------------------------------------------------------------
 // Write the data file header.
 void
-spatialdata::spatialdb::SimpleGridAscii::_writeHeader(std::ostream& fileout,
-                                                      const SimpleGridDB& db) { // _writeHeader
+spatialdata::spatialdb::SimpleGridDBIO::_writeHeader(const SimpleGridDBData& data,
+                                                     std::ostream& fileout) {
     const int version = 1;
-    const int numValues = db._numValues;
-    const int spaceDim = db._spaceDim;
+    const int numValues = data.getNumValues();
 
     fileout
-        << FILEHEADER << " " << version << "\n"
+        << header << " " << version << "\n"
         << "SimpleGridDB {\n"
-        << "  num-x = " << db._numX << "\n"
-        << "  num-y = " << db._numY << "\n"
-        << "  num-z = " << db._numZ << "\n"
-        << "  space-dim = " << spaceDim << "\n"
+        << "  num-x = " << data.getNumX() << "\n"
+        << "  num-y = " << data.getNumY() << "\n"
+        << "  num-z = " << data.getNumZ() << "\n"
         << "  num-values = " << numValues << "\n"
         << "  value-names =";
 
-    assert(db._names);
-    for (int iVal = 0; iVal < numValues; ++iVal) {
-        fileout << "  " << db._names[iVal];
+    const std::vector<std::string>& names = data.getNames();
+    for (int iValue = 0; iValue < numValues; ++iValue) {
+        fileout << "  " << names[iValue];
     }
     fileout << "\n";
 
-    assert(db._units);
     fileout << "  value-units =";
-    for (int iVal = 0; iVal < numValues; ++iVal) {
-        fileout << "  " << db._units[iVal];
+    for (int iValue = 0; iValue < numValues; ++iValue) {
+        fileout << "  " << data.getUnits(iValue);
     }
     fileout << "\n";
     fileout << "  cs-data = ";
-    spatialdata::geocoords::CSPicklerAscii::pickle(fileout, db._cs);
+    spatialdata::geocoords::CSPicklerAscii::pickle(fileout, data.getCoordSys());
     fileout << "}\n";
 
     if (!fileout.good()) {
@@ -487,33 +455,36 @@ spatialdata::spatialdb::SimpleGridAscii::_writeHeader(std::ostream& fileout,
 // ----------------------------------------------------------------------
 // Write data values.
 void
-spatialdata::spatialdb::SimpleGridAscii::_writeData(std::ostream& fileout,
-                                                    const SimpleGridDB& db) { // _writeData
+spatialdata::spatialdb::SimpleGridDBIO::_writeData(const SimpleGridDBData& data,
+                                                   std::ostream& fileout) {
     fileout
         << std::resetiosflags(std::ios::fixed)
         << std::setiosflags(std::ios::scientific)
         << std::setprecision(6);
 
-    const int numX = db._numX;
-    const int numY = db._numY;
-    const int numZ = db._numZ;
-    const int numValues = db._numValues;
+    const int numX = data.getNumX();
+    const int numY = data.getNumY();
+    const int numZ = data.getNumZ();
+    const int numValues = data.getNumValues();
 
     fileout << "// x-coordinates\n";
+    const std::vector<double>& x = data.getX();
     for (int i = 0; i < numX; ++i) {
-        fileout << std::setw(14) << db._x[i];
+        fileout << std::setw(14) << x[i];
     } // for
     fileout << "\n";
 
     fileout << "// y-coordinates\n";
+    const std::vector<double>& y = data.getY();
     for (int i = 0; i < numY; ++i) {
-        fileout << std::setw(14) << db._y[i];
+        fileout << std::setw(14) << y[i];
     } // for
     fileout << "\n";
 
     fileout << "// z-coordinates\n";
+    const std::vector<double>& z = data.getZ();
     for (int i = 0; i < numZ; ++i) {
-        fileout << std::setw(14) << db._z[i];
+        fileout << std::setw(14) << z[i];
     } // for
     fileout << "\n";
 
@@ -522,13 +493,14 @@ spatialdata::spatialdb::SimpleGridAscii::_writeData(std::ostream& fileout,
         for (int iZ = 0; iZ < numZ; ++iZ) {
             for (int iY = 0; iY < numY; ++iY) {
                 for (int iX = 0; iX < numX; ++iX) {
-                    const int iD = db._getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                    const size_t indexData = data.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                    const double* const dataLoc = data.getData(indexData);
                     fileout
-                        << std::setw(14) << db._x[iX]
-                        << std::setw(14) << db._y[iY]
-                        << std::setw(14) << db._z[iZ];
-                    for (int iV = 0; iV < numValues; ++iV) {
-                        fileout << std::setw(14) << db._data[iD+iV];
+                        << std::setw(14) << x[iX]
+                        << std::setw(14) << y[iY]
+                        << std::setw(14) << z[iZ];
+                    for (int iValue = 0; iValue < numValues; ++iValue) {
+                        fileout << std::setw(14) << dataLoc[iValue];
                     } // for
                     fileout << "\n";
                 } // for
@@ -538,12 +510,13 @@ spatialdata::spatialdb::SimpleGridAscii::_writeData(std::ostream& fileout,
         const int iZ = 0;
         for (int iY = 0; iY < numY; ++iY) {
             for (int iX = 0; iX < numX; ++iX) {
-                const int iD = db._getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                const size_t indexData = data.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+                const double* const dataLoc = data.getData(indexData);
                 fileout
-                    << std::setw(14) << db._x[iX]
-                    << std::setw(14) << db._y[iY];
-                for (int iV = 0; iV < numValues; ++iV) {
-                    fileout << std::setw(14) << db._data[iD+iV];
+                    << std::setw(14) << x[iX]
+                    << std::setw(14) << y[iY];
+                for (int iValue = 0; iValue < numValues; ++iValue) {
+                    fileout << std::setw(14) << dataLoc[iValue];
                 } // for
                 fileout << "\n";
             } // for
@@ -552,11 +525,12 @@ spatialdata::spatialdb::SimpleGridAscii::_writeData(std::ostream& fileout,
         const int iY = 0;
         const int iZ = 0;
         for (int iX = 0; iX < numX; ++iX) {
-            const int iD = db._getDataIndex(iX, numX, iY, numY, iZ, numZ);
+            const size_t indexData = data.getDataIndex(iX, numX, iY, numY, iZ, numZ);
+            const double* const dataLoc = data.getData(indexData);
             fileout
-                << std::setw(14) << db._x[iX];
-            for (int iV = 0; iV < numValues; ++iV) {
-                fileout << std::setw(14) << db._data[iD+iV];
+                << std::setw(14) << x[iX];
+            for (int iValue = 0; iValue < numValues; ++iValue) {
+                fileout << std::setw(14) << dataLoc[iValue];
             } // for
             fileout << "\n";
         } // for

@@ -10,94 +10,61 @@
 
 #include <portinfo>
 
-#include "SpatialDB.hh" // ISA SpatialDB object
 #include "SimpleDB.hh" // Implementation of class methods
 
-#include "SimpleIO.hh" // USES SimpleIO
 #include "SimpleDBData.hh" // USES SimpleDBData
 #include "SimpleDBQuery.hh" // USES SimpleDBQuery
+#include "SimpleDBIO.hh" // USES SimpleDBIO
 
+#include "spatialdata/spatialdb/Exception.hh" // USES OutOfBounds
 #include "spatialdata/geocoords/CoordSys.hh" // USES CoordSys
 
 #include <sstream> // USES std::ostringsgream
 #include <cassert> // USES assert()
 #include <stdexcept> // USES std::runtime_error
-#include "Exception.hh" // USES OutOfBounds
 
 // ----------------------------------------------------------------------
 /// Default constructor
-spatialdata::spatialdb::SimpleDB::SimpleDB(void) :
-    _data(NULL),
-    _iohandler(NULL),
-    _query(NULL),
-    _cs(NULL) {}
-
-
-// ----------------------------------------------------------------------
-/// Constructor with label
-spatialdata::spatialdb::SimpleDB::SimpleDB(const char* label) :
-    SpatialDB(label),
-    _data(NULL),
-    _iohandler(NULL),
-    _query(NULL),
-    _cs(NULL) {}
+spatialdata::spatialdb::SimpleDB::SimpleDB(const char* description) :
+    SpatialDB(description ? description : ":UNKNOWN SimpleDB:") {
+    _data = std::make_unique<SimpleDBData>();
+    _query = std::make_unique<SimpleDBQuery>(*_data.get(), this->getDescription());
+}
 
 
 // ----------------------------------------------------------------------
 /// Default destructor
-spatialdata::spatialdb::SimpleDB::~SimpleDB(void) {
-    delete _data;_data = NULL;
-    delete _iohandler;_iohandler = NULL;
-    delete _query;_query = NULL;
-    delete _cs;_cs = NULL;
-} // destructor
+spatialdata::spatialdb::SimpleDB::~SimpleDB(void) {}
 
 
 // ----------------------------------------------------------------------
 // Set query type.
 void
 spatialdata::spatialdb::SimpleDB::setQueryType(const SimpleDB::QueryEnum queryType) {
-    if (!_query) {
-        _query = new SimpleDBQuery(*this);
-    } // if
     assert(_query);
     _query->setQueryType(queryType);
 } // setQueryType
 
 
 // ----------------------------------------------------------------------
-// Set the I/O handler.
+// Set filename for database.
 void
-spatialdata::spatialdb::SimpleDB::setIOHandler(const SimpleIO* iohandler) {
-    delete _iohandler;_iohandler = iohandler ? iohandler->clone() : NULL;
-} // setIOHandler
+spatialdata::spatialdb::SimpleDB::setFilename(const char* filename) {
+    if (!filename) {
+        throw std::logic_error("Null argument to SimpleDB::setFilename().");
+    } // if
+    _filename = filename;
+}
 
 
 // ----------------------------------------------------------------------
 /// Open the database and prepare for querying.
 void
 spatialdata::spatialdb::SimpleDB::open(void) {
-    assert(_iohandler);
-
-    // Read data
-    if (!_data) {
-        _data = new SimpleDBData;
-        _iohandler->read(_data, &_cs);
-    } // if
-
-    // Create query object
-    if (!_query) {
-        _query = new SimpleDBQuery(*this);
-    } // if
+    SimpleDBIO::read(_data.get(), _filename.c_str());
 
     // Set default query values to all values in database
-    const size_t numValues = _data->getNumValues();
-    const char** queryValues = (numValues > 0) ? new const char*[numValues] : NULL;
-    for (size_t i = 0; i < numValues; ++i) {
-        queryValues[i] = _data->getName(i);
-    } // for
-    _query->setQueryValues(queryValues, numValues);
-    delete[] queryValues;queryValues = NULL;
+    _query->setQueryValues(_data->getNames());
 } // open
 
 
@@ -105,76 +72,55 @@ spatialdata::spatialdb::SimpleDB::open(void) {
 /// Close the database.
 void
 spatialdata::spatialdb::SimpleDB::close(void) {
-    delete _data;_data = 0;
-
-    if (_query) {
-        _query->deallocate();
-    } // if
+    _data->deallocate();
 } // close
 
 
 // ----------------------------------------------------------------------
 // Get names of values in spatial database.
-void
-spatialdata::spatialdb::SimpleDB::getNamesDBValues(const char*** valueNames,
-                                                   size_t* numValues) const {
-    const size_t dataNumValues = (_data) ? _data->getNumValues() : 0;
-    if (valueNames) {
-        *valueNames = (dataNumValues > 0) ? new const char*[dataNumValues] : NULL;
-        for (size_t i = 0; i < dataNumValues; ++i) {
-            (*valueNames)[i] = _data->getName(i);
-        } // for
-    }
-    if (numValues) {
-        *numValues = dataNumValues;
+const std::vector<std::string>&
+spatialdata::spatialdb::SimpleDB::getNamesDBValues(void) const {
+    if (!_data) {
+        std::ostringstream msg;
+        msg << "Spatial database " << getDescription() << " has not been opened.\n"
+            << "Please call open() before calling getNamesDBValues().";
+        throw std::logic_error(msg.str());
     } // if
+    return _data->getNames();
 } // getNamesDBValues
 
 
 // ----------------------------------------------------------------------
 // Set values to be returned by queries.
 void
-spatialdata::spatialdb::SimpleDB::setQueryValues(const char* const* names,
-                                                 const size_t numVals) {
+spatialdata::spatialdb::SimpleDB::setQueryValues(const std::vector<std::string>& names) {
     if (!_query) {
         std::ostringstream msg;
         msg << "Spatial database " << getDescription() << " has not been opened.\n"
-            << "Please call Open() before calling QueryVals().";
+            << "Please call open() before calling setQueryValues().";
         throw std::logic_error(msg.str());
     } // if
-    _query->setQueryValues(names, numVals);
+    _query->setQueryValues(names);
 } // queryVals
 
 
 // ----------------------------------------------------------------------
 // Query the database.
 int
-spatialdata::spatialdb::SimpleDB::query(double* vals,
-                                        const size_t numVals,
-                                        const double* coords,
-                                        const size_t numDims,
-                                        const spatialdata::geocoords::CoordSys* pCSQuery) {
+spatialdata::spatialdb::SimpleDB::query(double* values,
+                                        const size_t numValues,
+                                        const double* coordinates,
+                                        const spatialdata::geocoords::CoordSys* csCoordinates) {
     try {
-        if (!_query) {
-            std::ostringstream msg;
-            msg << "Spatial database " << getDescription() << " has not been opened.\n"
-                << "Please call open() before calling query().";
-            throw std::logic_error(msg.str());
-        } // if
-        else if (!_data) {
-            std::ostringstream msg;
-            msg << "Spatial database " << getDescription() << " does not contain any data.\n"
-                << "Database query aborted.";
-            throw std::domain_error(msg.str());
-        } // if
-        _query->query(vals, numVals, coords, numDims, pCSQuery);
+        assert(_query);
+        _query->query(values, numValues, coordinates, csCoordinates);
     } catch (const OutOfBounds& err) {
-        std::fill(vals, vals+numVals, 0);
+        std::fill(values, values+numValues, 0);
         return 1;
     } catch (const std::exception& err) {
         throw;
     } catch (...) {
-        throw std::runtime_error("Unknown error in SpatialDB query");
+        throw std::runtime_error("Unknown error in SimpleDB::query()");
     } // catch
     return 0;
 } // query

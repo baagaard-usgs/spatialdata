@@ -14,8 +14,8 @@
 #include <string> // HASA std::string
 #include <map> // HASA std::map
 
-class spatialdata::spatialdb::UserFunctionDB : public SpatialDB {
-    friend class TestUserFunctionDB; // unit testing
+class spatialdata::spatialdb::CxxFunctionDB : public SpatialDB {
+    friend class TestCxxFunctionDB; // unit testing
 
 public:
 
@@ -26,7 +26,7 @@ public:
      * @param x X coordinate.
      * @returns Value of user-defined function.
      */
-    typedef double (*userfn1D_type)(const double x);
+    typedef double (*cxxfn1D_type)(const double x);
 
     /** User function prototype in 2-D.
      *
@@ -34,8 +34,8 @@ public:
      * @param y Y coordinate.
      * @returns Value of user-defined function.
      */
-    typedef double (*userfn2D_type)(const double x,
-                                    const double y);
+    typedef double (*cxxfn2D_type)(const double x,
+                                   const double y);
 
     /** User function prototype in 3-D.
      *
@@ -44,18 +44,21 @@ public:
      * @param z Z coordinate.
      * @returns Value of user-defined function.
      */
-    typedef double (*userfn3D_type)(const double x,
-                                    const double y,
-                                    const double z);
+    typedef double (*cxxfn3D_type)(const double x,
+                                   const double y,
+                                   const double z);
 
     // PUBLIC MEMBERS ///////////////////////////////////////////////////////
 public:
 
-    /// Constructor
-    UserFunctionDB(void);
+    /** Constructor with description.
+     *
+     * @param description Description of database
+     */
+    CxxFunctionDB(const char* description);
 
     /// Destructor
-    ~UserFunctionDB(void);
+    ~CxxFunctionDB(void);
 
     /** Add function/value to database in 1-D.
      *
@@ -64,7 +67,7 @@ public:
      * @param units Units associated with function value.
      */
     void addValue(const char* name,
-                  userfn1D_type fn,
+                  cxxfn1D_type fn,
                   const char* units);
 
     /** Add function/value to database in 2-D.
@@ -74,7 +77,7 @@ public:
      * @param units Units associated with function value.
      */
     void addValue(const char* name,
-                  userfn2D_type fn,
+                  cxxfn2D_type fn,
                   const char* units);
 
     /** Add function/value to database in 3-D.
@@ -84,59 +87,54 @@ public:
      * @param units Units associated with function value.
      */
     void addValue(const char* name,
-                  userfn3D_type fn,
+                  cxxfn3D_type fn,
                   const char* units);
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void) override;
 
     /** Get names of values in spatial database.
      *
-     * @param[out] valueNames Array of names of values.
-     * @param[out] numValues Size of array.
+     * @returns Names of values.
      */
-    void getNamesDBValues(const char*** valueNames,
-                          size_t* numValues) const;
+    const std::vector<std::string>& getNamesDBValues(void) const override;
 
     /** Set values to be returned by queries.
      *
      * @pre Must call open() before setQueryValues()
      *
      * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
+     * @param numValues Number of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numVals);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
-     * @note pVals should be preallocated to accommodate numVals values.
+     * @note pVals should be preallocated to accommodate numValues values.
      *
      * @pre Must call open() before query()
      *
-     * @param vals Array for computed values (output from query), must be
+     * @param values Array for computed values (output from query), must be
      *   allocated BEFORE calling query().
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param pCSQuery Coordinate system of coordinates
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point for query
+     * @param csCoordinates Coordinate system of coordinates
      *
      * @returns 0 on success, 1 on failure.
      */
-    int query(double* vals,
-              const size_t numVals,
-              const double* coords,
-              const size_t numDims,
-              const spatialdata::geocoords::CoordSys* pCSQuery);
+    int query(double* values,
+              const size_t numValues,
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
     /** Set coordinate system associated with user functions.
      *
      * @param cs Coordinate system.
      */
-    void setCoordSys(const geocoords::CoordSys& cs);
+    void setCoordSys(const std::shared_ptr<geocoords::CoordSys>& cs);
 
 private:
 
@@ -172,13 +170,13 @@ private:
     // PRIVATE STRUCTS //////////////////////////////////////////////////////
 private:
 
-    class QueryFn {
+    class CxxFn {
 public:
 
-        QueryFn(void) {}
+        CxxFn(void) {}
 
 
-        virtual ~QueryFn(void) {}
+        virtual ~CxxFn(void) {}
 
 
         virtual int query(double* value,
@@ -186,34 +184,36 @@ public:
                           const size_t dim) = 0;
 
     };
-    class QueryFn1D;
-    class QueryFn2D;
-    class QueryFn3D;
+    class CxxFn1D;
+    class CxxFn2D;
+    class CxxFn3D;
 
     /// Structure for holding user data
-    struct UserData {
-        QueryFn* fn; ///< User-defined function for query.
+    struct QueryFn {
+        std::shared_ptr<CxxFn> fn; ///< User-defined function for query.
         std::string units; ///< Units for value of user function.
         double scale; ///< Scale to convert to SI units.
-    }; // UserData
+    }; // QueryFn
 
-    typedef std::map<std::string, UserData> function_map;
+    typedef std::map<std::string, QueryFn> function_map;
 
     // PRIVATE MEMBERS //////////////////////////////////////////////////////
 private:
 
-    UserData** _queryFunctions; ///< Array of pointers to _functions of values to be returned in queries.
-    std::map<std::string, UserData> _functions; ///< User functions for values.
-    spatialdata::geocoords::CoordSys* _cs; ///< Coordinate system
-    spatialdata::geocoords::Converter* _converter; ///< Convert query points to local coordinate system.U
-    size_t _querySize; ///< Number of values to be returned in queries.
+    std::vector<QueryFn> _functions; ///< Query functions for each value.
+    std::vector<size_t> _queryIndices; ///< Indices for queries
+    std::vector<std::string> _names; ///< Names of values in spatial database.
+    std::shared_ptr<spatialdata::geocoords::CoordSys> _cs; ///< Coordinate system
+    std::unique_ptr<spatialdata::geocoords::Converter> _converter; ///< Convert query points to local coordinate
+                                                                   ///< system.U
 
     // NOT IMPLEMENTED //////////////////////////////////////////////////////
 private:
 
-    UserFunctionDB(const UserFunctionDB&); ///< Not implemented
-    const UserFunctionDB& operator=(const UserFunctionDB&); ///< Not implemented
+    CxxFunctionDB(void); ///< Not implemented
+    CxxFunctionDB(const CxxFunctionDB&); ///< Not implemented
+    const CxxFunctionDB& operator=(const CxxFunctionDB&); ///< Not implemented
 
-}; // UserFunctionDB
+}; // CxxFunctionDB
 
 // End of file

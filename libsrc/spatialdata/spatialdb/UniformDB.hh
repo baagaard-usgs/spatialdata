@@ -21,14 +21,11 @@ public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
 
-    /// Default constructor.
-    UniformDB(void);
-
-    /** Constructor with label.
+    /** Constructor with description.
      *
-     * @param label Label of database
+     * @param description Description of database
      */
-    UniformDB(const char* label);
+    UniformDB(const char* description);
 
     /// Default destructor.
     ~UniformDB(void);
@@ -38,61 +35,54 @@ public:
      * @param names Array of names of values in database.
      * @param units Array of units for values in database.
      * @param values Array of values in database.
-     * @param numValues Number of values in database.
      */
-    void setData(const char* const* names,
-                 const char* const* units,
-                 const double* values,
-                 const size_t numValues);
+    void setData(const std::vector<std::string>& names,
+                 const std::vector<std::string>& units,
+                 const std::vector<double>& values);
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void) override;
 
     /** Get names of values in spatial database.
      *
      * @param[out] valueNames Array of names of values.
-     * @param[out] numValues Size of array.
      */
-    void getNamesDBValues(const char*** valueNames,
-                          size_t* numValues) const;
+    const std::vector<std::string>& getNamesDBValues(void) const override;
 
     /** Set values to be returned by queries.
      *
      * @pre Must call open() before setQueryValues()
      *
      * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
      */
-    void setQueryValues(const char* const* names,
-                        const size_t numVals);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
      * @pre Must call open() before query()
      *
-     * @param vals Array for computed values (output from query), vals
+     * @param values Array for computed values (output from query), values
      *   must be allocated BEFORE calling query().
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param pCSQuery Coordinate system of coordinates
+     * @param numValues Number of values expected (size of values array)
+     * @param coordinates Coordinates of point for query
+     * @param csCoordinates Coordinate system of coordinates
      *
      * @returns 0 on success, 1 on failure (i.e., could not interpolate
      *   so values set to 0)
      */
-    int query(double* vals,
-              const size_t numVals,
-              const double* coords,
-              const size_t numDims,
-              const spatialdata::geocoords::CoordSys* pCSQuery);
+    int query(double* values,
+              const size_t numValues,
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
 private:
 
     // PRIVATE METHODS ////////////////////////////////////////////////////
 
+    UniformDB(void); ///< Not implemented
     UniformDB(const UniformDB& data); ///< Not implemented
     const UniformDB& operator=(const UniformDB& data); ///< Not implemented
 
@@ -100,11 +90,9 @@ private:
 
     // PRIVATE MEMBERS /////////////////////////////////////////////////////
 
-    std::string* _names; ///< Names of values in database
-    double* _values; ///< Values in database
-    size_t* _queryValues; ///< Indices of values to be returned in queries.
-    size_t _numValues; ///< Number of values in database
-    size_t _querySize; ///< Number of values requested to be returned in queries.
+    std::vector<double> _values; ///< Values in database
+    std::vector<std::string> _names; ///< Names of values in database
+    std::vector<size_t> _queryIndices; ///< Indices of values to be returned in queries.
 }; // class UniformDB
 
 #include "UniformDB.icc"

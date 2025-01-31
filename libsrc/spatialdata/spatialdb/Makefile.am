@@ -14,34 +14,29 @@ include $(top_srcdir)/subpackage.am
 subpkginclude_HEADERS = \
 	AnalyticDB.hh \
 	AnalyticDB.icc \
-	CompositeDB.hh \
 	Exception.hh \
 	Exception.icc \
-	GocadVoxet.hh \
 	SpatialDB.hh \
-	SpatialDB.icc \
+	GravityField.hh \
 	SimpleDB.hh \
-	SimpleIO.hh \
-	SimpleIO.icc \
-	SimpleIOAscii.hh \
-	SimpleIOAscii.icc \
-	cspatialdb.h \
+	SimpleDBIO.hh \
 	SimpleDBQuery.hh \
 	SimpleDBData.hh \
 	SimpleDBData.icc \
-	SimpleGridDB.hh \
-	SimpleGridDB.icc \
-	SimpleGridAscii.hh \
-	GravityField.hh \
-	SCECCVMH.hh \
-	SCECCVMH.icc \
 	TimeHistory.hh \
-	TimeHistory.icc \
 	TimeHistoryIO.hh \
 	UniformDB.hh \
 	UniformDB.icc \
-	UserFunctionDB.hh \
+	CxxFunctionDB.hh \
+	SimpleGridDB.hh \
+	SimpleGridDBData.hh \
+	SimpleGridDBData.icc \
+	SimpleGridDBuery.hh \
+	SimpleGridDBIO.hh \
+	CompositeDB.hh \
+	Utilities.hh \
 	spatialdbfwd.hh
+
 
 noinst_HEADERS =
 

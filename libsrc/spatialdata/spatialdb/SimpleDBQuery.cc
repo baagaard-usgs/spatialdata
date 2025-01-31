@@ -16,6 +16,7 @@
 
 #include "SimpleDBData.hh" // USEs SimpleDBData
 
+#include "spatialdata/geocoords/CoordSys.hh" // USES CoordSys
 #include "spatialdata/geocoords/Converter.hh" // USES Converter
 
 #include "Exception.hh" // USES OutOfBounds
@@ -33,19 +34,18 @@
 
 // ----------------------------------------------------------------------
 // Default constructor.
-spatialdata::spatialdb::SimpleDBQuery::SimpleDBQuery(const SimpleDB& db) :
+spatialdata::spatialdb::SimpleDBQuery::SimpleDBQuery(const SimpleDBData& data,
+                                                     const char* description) :
+    _data(data),
+    _description(description),
     _queryType(SimpleDB::LINEAR),
-    _db(db),
-    _converter(new spatialdata::geocoords::Converter),
-    _queryValues(NULL),
-    _querySize(0) {}
+    _converter(new spatialdata::geocoords::Converter) {}
 
 
 // ----------------------------------------------------------------------
 // Default destructor.
 spatialdata::spatialdb::SimpleDBQuery::~SimpleDBQuery(void) {
     deallocate();
-    delete _converter;_converter = NULL;
 } // destructor
 
 
@@ -53,9 +53,8 @@ spatialdata::spatialdb::SimpleDBQuery::~SimpleDBQuery(void) {
 // Deallocate data structures.
 void
 spatialdata::spatialdb::SimpleDBQuery::deallocate(void) {
-    delete[] _queryValues;_queryValues = NULL;
-    _querySize = 0;
-    _nearest.resize(0);
+    _nearest.clear();_nearest.shrink_to_fit();
+    _queryIndices.clear();_queryIndices.shrink_to_fit();
 } // deallocate
 
 
@@ -70,39 +69,37 @@ spatialdata::spatialdb::SimpleDBQuery::setQueryType(const SimpleDB::QueryEnum va
 // ----------------------------------------------------------------------
 // Set values to be returned by queries.
 void
-spatialdata::spatialdb::SimpleDBQuery::setQueryValues(const char* const* names,
-                                                      const size_t numVals) {
-    assert(_db._data);
-    if (0 == numVals) {
+spatialdata::spatialdb::SimpleDBQuery::setQueryValues(const std::vector<std::string>& names) {
+    if (0 == names.size()) {
         std::ostringstream msg;
-        msg << "Number of values for query in spatial database " << _db.getDescription()
-            << "\n must be positive.\n";
+        msg << "Number of values for query in spatial database " << _description
+            << " must be positive.\n";
         throw std::invalid_argument(msg.str());
     } // if
-    assert(names && 0 < numVals);
 
-    _querySize = numVals;
-    delete[] _queryValues;_queryValues = new size_t[numVals];
-    for (size_t iVal = 0; iVal < numVals; ++iVal) {
+    const size_t querySize = names.size();
+    _queryIndices.clear();
+    _queryIndices.reserve(querySize);
+    for (size_t iQuery = 0; iQuery < querySize; ++iQuery) {
         size_t iName = 0;
-        const size_t numNames = _db._data->getNumValues();
+        const size_t numNames = _data.getNumValues();
         while (iName < numNames) {
-            if (0 == strcasecmp(names[iVal], _db._data->getName(iName))) {
+            if (0 == strcasecmp(names[iQuery].c_str(), _data.getName(iName))) {
                 break;
-            }
+            } // if
             ++iName;
         } // while
         if (iName >= numNames) {
             std::ostringstream msg;
-            msg << "Could not find value '" << names[iVal] << "' in spatial database '"
-                << _db.getDescription() << "'. Available values are:";
+            msg << "Could not find value '" << names[iQuery] << "' in spatial database '"
+                << _description << "'. Available values are:";
             for (size_t iName = 0; iName < numNames; ++iName) {
-                msg << "\n  " << _db._data->getName(iName);
+                msg << "\n  " << _data.getName(iName);
             }
             msg << "\n";
             throw std::out_of_range(msg.str());
         } // if
-        _queryValues[iVal] = iName;
+        _queryIndices.emplace_back(iName);
     } // for
 } // setQueryVals
 
@@ -110,44 +107,53 @@ spatialdata::spatialdb::SimpleDBQuery::setQueryValues(const char* const* names,
 // ----------------------------------------------------------------------
 // Query the database.
 void
-spatialdata::spatialdb::SimpleDBQuery::query(double* vals,
-                                             const size_t numVals,
-                                             const double* coords,
-                                             const size_t numDims,
-                                             const spatialdata::geocoords::CoordSys* pCSQuery) {
-    assert(0 != coords);
+spatialdata::spatialdb::SimpleDBQuery::query(double* values,
+                                             const size_t numValues,
+                                             const double* coordinates,
+                                             const spatialdata::geocoords::CoordSys* csCoordinates) {
+    assert(!numValues || values);
+    assert(coordinates);
+    assert(csCoordinates);
 
-    if (0 == _querySize) {
+    const size_t spaceDim = csCoordinates->getSpaceDim();
+    const size_t querySize = _queryIndices.size();
+    if (0 == querySize) {
         std::ostringstream msg;
-        msg << "Values to be returned by spatial database " << _db.getDescription() << "\n"
+        msg << "Values to be returned by spatial database " << _description << "\n"
             << "have not been set. Please call setQueryValues() before query().\n";
         throw std::logic_error(msg.str());
     } // if
-    else if (numVals != _querySize) {
+    else if (numValues != querySize) {
         std::ostringstream msg;
         msg << "Number of values to be returned by spatial database "
-            << _db.getDescription() << "\n"
-            << "(" << _querySize << ") does not match size of array provided ("
-            << numVals << ").\n";
+            << _description << "\n"
+            << "(" << querySize << ") does not match size of array provided ("
+            << numValues << ").\n";
+        throw std::invalid_argument(msg.str());
+    } else if (spaceDim != _data.getSpaceDim()) {
+        std::ostringstream msg;
+        msg << "Spatial dimension (" << spaceDim
+            << ") does not match spatial dimension of spatial database (" << _data.getSpaceDim() << ").";
         throw std::invalid_argument(msg.str());
     } // if
 
     const size_t numLocs = 1;
-    _q[0] = 0.0;
-    _q[1] = 0.0;
-    _q[2] = 0.0;
-    for (size_t i = 0; i < numDims; ++i) {
-        _q[i] = coords[i];
+    _queryPoint[0] = 0.0;
+    _queryPoint[1] = 0.0;
+    _queryPoint[2] = 0.0;
+    for (size_t i = 0; i < spaceDim; ++i) {
+        _queryPoint[i] = coordinates[i];
     } // for
     assert(_converter);
-    _converter->convert(_q, numLocs, numDims, _db._cs, pCSQuery);
+
+    _converter->convert(_queryPoint, numLocs, spaceDim, _data.getCoordSys(), csCoordinates);
 
     switch (_queryType) {
     case SimpleDB::LINEAR:
-        _queryLinear(vals, numVals);
+        _queryLinear(values, numValues);
         break;
     case SimpleDB::NEAREST:
-        _queryNearest(vals, numVals);
+        _queryNearest(values, numValues);
         break;
     default:
         throw std::logic_error("Could not find requested query type.");
@@ -158,73 +164,70 @@ spatialdata::spatialdb::SimpleDBQuery::query(double* vals,
 // ----------------------------------------------------------------------
 // Query database using nearest neighbor algorithm.
 void
-spatialdata::spatialdb::SimpleDBQuery::_queryNearest(double* vals,
-                                                     const size_t numVals) {
-    assert( (0 < numVals && vals) ||
-            (0 == numVals && !vals) );
-    assert(_db._data);
-    assert(numVals == _querySize);
+spatialdata::spatialdb::SimpleDBQuery::_queryNearest(double* values,
+                                                     const size_t numValues) {
+    assert( (0 < numValues && values) ||
+            (0 == numValues && !values) );
+    assert(numValues == _queryIndices.size());
 
-    size_t iNear = 0;
-    const size_t spaceDim = _db._data->getSpaceDim();
-    double pt[3];
-    _setPoint3(pt, _db._data->getCoordinates(iNear), spaceDim);
-    double nearDist = _distSquared(_q, pt);
+    size_t i_near = 0;
+    const size_t spaceDim = _data.getSpaceDim();
+    double point[3];
+    _setPoint3(point, _data.getCoordinates(i_near), spaceDim);
+    double nearDist = _distSquared(_queryPoint, point);
 
-    const size_t numLocs = _db._data->getNumLocs();
+    const size_t numLocs = _data.getNumLocs();
     for (size_t iLoc = 1; iLoc < numLocs; ++iLoc) {
-        _setPoint3(pt, _db._data->getCoordinates(iLoc), spaceDim);
-        const double dist = _distSquared(_q, pt);
+        _setPoint3(point, _data.getCoordinates(iLoc), spaceDim);
+        const double dist = _distSquared(_queryPoint, point);
         if (dist < nearDist) {
             nearDist = dist;
-            iNear = iLoc;
+            i_near = iLoc;
         } // if
     } // for
 
-    const double* nearVals = _db._data->getData(iNear);
-    const size_t querySize = _querySize;
-    for (size_t iVal = 0; iVal < querySize; ++iVal) {
-        vals[iVal] = nearVals[_queryValues[iVal]];
-    }
+    const double* nearVals = _data.getData(i_near);
+    const size_t querySize = _queryIndices.size();
+    for (size_t iValue = 0; iValue < querySize; ++iValue) {
+        values[iValue] = nearVals[_queryIndices[iValue]];
+    } // for
 } // _queryNearest
 
 
 // ----------------------------------------------------------------------
 // Query database using linear interpolation algorithm.
 void
-spatialdata::spatialdb::SimpleDBQuery::_queryLinear(double* vals,
-                                                    const size_t numVals) {
-    assert( (0 < numVals && vals) ||
-            (0 == numVals && !vals) );
-    assert(_db._data);
-    assert(numVals == _querySize);
+spatialdata::spatialdb::SimpleDBQuery::_queryLinear(double* values,
+                                                    const size_t numValues) {
+    assert( (0 < numValues && values) ||
+            (0 == numValues && !values) );
+    const size_t querySize = _queryIndices.size();
+    assert(numValues == querySize);
 
-    if (0 == _db._data->getDataDim()) {
+    if (0 == _data.getDataDim()) {
         const int index = 0;
-        const double* nearVals = _db._data->getData(index);
-        const size_t querySize = _querySize;
-        for (size_t iVal = 0; iVal < querySize; ++iVal) {
-            vals[iVal] = nearVals[_queryValues[iVal]];
+        const double* nearVals = _data.getData(index);
+        for (size_t iValue = 0; iValue < numValues; ++iValue) {
+            values[iValue] = nearVals[_queryIndices[iValue]];
         }
     } else { // else
         // Find nearest locations in database
         _findNearest();
 
         // Get interpolation weights
-        std::vector<WtStruct> weights;
+        std::vector<Weighting> weights;
         _getWeights(&weights);
 
         // Interpolate values
         const size_t numWts = weights.size();
-        const size_t querySize = _querySize;
-        for (size_t iVal = 0; iVal < querySize; ++iVal) {
+        for (size_t iValue = 0; iValue < numValues; ++iValue) {
             double val = 0;
             for (size_t iWt = 0; iWt < numWts; ++iWt) {
-                const size_t iLoc = _nearest[weights[iWt].nearIndex];
-                const double* locVals = _db._data->getData(iLoc);
-                val += weights[iWt].wt * locVals[_queryValues[iVal]];
+                const size_t iLoc = _nearest[weights[iWt].i_near];
+                const double* locVals = _data.getData(iLoc);
+                val += weights[iWt].wt * locVals[_queryIndices[iValue]];
             } // for
-            vals[iVal] = val;
+            values[iValue] = val;
         } // for
     } // else
 } // _queryLinear
@@ -233,10 +236,8 @@ spatialdata::spatialdb::SimpleDBQuery::_queryLinear(double* vals,
 // ----------------------------------------------------------------------
 void
 spatialdata::spatialdb::SimpleDBQuery::_findNearest(void) {
-    assert(_db._data);
-
     const size_t maxnear = 100;
-    const size_t numLocs = _db._data->getNumLocs();
+    const size_t numLocs = _data.getNumLocs();
     const size_t nearSize = (numLocs < maxnear) ? numLocs : maxnear;
     _nearest.resize(nearSize);
     std::fill(_nearest.begin(), _nearest.end(), -1);
@@ -245,12 +246,12 @@ spatialdata::spatialdb::SimpleDBQuery::_findNearest(void) {
     std::fill(nearestDist.begin(), nearestDist.end(), MAXFLOAT);
 
     // find closest nearSize points
-    double pt[3];
-    const size_t spaceDim = _db._data->getSpaceDim();
+    double point[3];
+    const size_t spaceDim = _data.getSpaceDim();
     for (size_t iLoc = 0; iLoc < numLocs; ++iLoc) {
         // use square of distance to find closest
-        _setPoint3(pt, _db._data->getCoordinates(iLoc), spaceDim);
-        const double dist2 = _distSquared(_q, pt);
+        _setPoint3(point, _data.getCoordinates(iLoc), spaceDim);
+        const double dist2 = _distSquared(_queryPoint, point);
 
         // find place in nearest list if it exists
         const std::vector<double>::iterator pNearDist =
@@ -280,8 +281,7 @@ spatialdata::spatialdb::SimpleDBQuery::_findNearest(void) {
 
 // ----------------------------------------------------------------------
 void
-spatialdata::spatialdb::SimpleDBQuery::_getWeights(std::vector<WtStruct>* pWeights) {
-    assert(_db._data);
+spatialdata::spatialdb::SimpleDBQuery::_getWeights(std::vector<Weighting>* pWeights) {
     assert(pWeights);
 
     /* Start with nearest point. Add next nearest points as necessary
@@ -289,29 +289,29 @@ spatialdata::spatialdb::SimpleDBQuery::_getWeights(std::vector<WtStruct>* pWeigh
      * results in linear interpolation, adding 2 results in areal
      * interpolation, etc.
      */
-    const size_t dataDim = _db._data->getDataDim();
+    const size_t dataDim = _data.getDataDim();
     if (0 == dataDim) {
         const int numWts = 1;
         pWeights->resize(numWts);
-        _findPointPt(pWeights);
+        _findPointPoint(pWeights);
     } else if (1 == dataDim) {
         const int numWts = 2;
         pWeights->resize(numWts);
-        _findPointPt(pWeights);
-        _findLinePt(pWeights);
+        _findPointPoint(pWeights);
+        _findLinePoint(pWeights);
     } else if (2 == dataDim) {
         const int numWts = 3;
         pWeights->resize(numWts);
-        _findPointPt(pWeights);
-        _findLinePt(pWeights);
-        _findAreaPt(pWeights);
+        _findPointPoint(pWeights);
+        _findLinePoint(pWeights);
+        _findAreaPoint(pWeights);
     } else if (3 == dataDim) {
         const int numWts = 4;
         pWeights->resize(numWts);
-        _findPointPt(pWeights);
-        _findLinePt(pWeights);
-        _findAreaPt(pWeights);
-        _findVolumePt(pWeights);
+        _findPointPoint(pWeights);
+        _findLinePoint(pWeights);
+        _findAreaPoint(pWeights);
+        _findVolumePoint(pWeights);
     } else {
         throw std::logic_error("Could not set weights for unknown data dimension.");
     } // if/else
@@ -320,31 +320,29 @@ spatialdata::spatialdb::SimpleDBQuery::_getWeights(std::vector<WtStruct>* pWeigh
 
 // ----------------------------------------------------------------------
 void
-spatialdata::spatialdb::SimpleDBQuery::_findPointPt(std::vector<WtStruct>* pWeights) {
-    assert(_db._data);
+spatialdata::spatialdb::SimpleDBQuery::_findPointPoint(std::vector<Weighting>* pWeights) {
     assert(pWeights);
 
     (*pWeights)[0].wt = 1.0;
-    (*pWeights)[0].nearIndex = 0;
-} // _findPointPt
+    (*pWeights)[0].i_near = 0;
+} // _findPointPoint
 
 
 // ----------------------------------------------------------------------
 void
-spatialdata::spatialdb::SimpleDBQuery::_findLinePt(std::vector<WtStruct>* pWeights) {
-    assert(_db._data);
+spatialdata::spatialdb::SimpleDBQuery::_findLinePoint(std::vector<Weighting>* pWeights) {
     assert(pWeights);
 
-    const size_t spaceDim = _db._data->getSpaceDim();
+    const size_t spaceDim = _data.getSpaceDim();
 
     // best case is to use next nearest pt
-    const size_t nearIndexA = (*pWeights)[0].nearIndex;
+    const size_t nearIndexA = (*pWeights)[0].i_near;
     size_t nearIndexB = nearIndexA + 1;
 
     const size_t locIndexA = _nearest[nearIndexA];
     double ptA[3];
     assert(locIndexA >= 0);
-    _setPoint3(ptA, _db._data->getCoordinates(locIndexA), spaceDim);
+    _setPoint3(ptA, _data.getCoordinates(locIndexA), spaceDim);
 
     double wtA = 0;
     double wtB = 0;
@@ -354,7 +352,7 @@ spatialdata::spatialdb::SimpleDBQuery::_findLinePt(std::vector<WtStruct>* pWeigh
     const size_t nearSize = _nearest.size();
     while (nearIndexB < nearSize) {
         const size_t locIndexB = _nearest[nearIndexB];
-        _setPoint3(ptB, _db._data->getCoordinates(locIndexB), spaceDim);
+        _setPoint3(ptB, _data.getCoordinates(locIndexB), spaceDim);
 
         // wtA = DotProduct(pb, ab) / DotProduct(ab, ab)
         // wtB = DotProduct(ap, ab) / DotProduct(ab, ab)
@@ -362,8 +360,8 @@ spatialdata::spatialdb::SimpleDBQuery::_findLinePt(std::vector<WtStruct>* pWeigh
         const double abY = ptB[1] - ptA[1];
         const double abZ = ptB[2] - ptA[2];
         const double abdotab = abX*abX + abY*abY + abZ*abZ;
-        const double pbdotab = (ptB[0]-_q[0])*abX + (ptB[1]-_q[1])*abY + (ptB[2]-_q[2])*abZ;
-        const double apdotab = (_q[0]-ptA[0])*abX + (_q[1]-ptA[1])*abY + (_q[2]-ptA[2])*abZ;
+        const double pbdotab = (ptB[0]-_queryPoint[0])*abX + (ptB[1]-_queryPoint[1])*abY + (ptB[2]-_queryPoint[2])*abZ;
+        const double apdotab = (_queryPoint[0]-ptA[0])*abX + (_queryPoint[1]-ptA[1])*abY + (_queryPoint[2]-ptA[2])*abZ;
         wtA = pbdotab / abdotab;
         wtB = apdotab / abdotab;
 
@@ -381,28 +379,27 @@ spatialdata::spatialdb::SimpleDBQuery::_findLinePt(std::vector<WtStruct>* pWeigh
     }
     (*pWeights)[0].wt = wtA;
     (*pWeights)[1].wt = wtB;
-    (*pWeights)[1].nearIndex = nearIndexB;
-} // _findLinePt
+    (*pWeights)[1].i_near = nearIndexB;
+} // _findLinePoint
 
 
 // ----------------------------------------------------------------------
 void
-spatialdata::spatialdb::SimpleDBQuery::_findAreaPt(std::vector<WtStruct>* pWeights) { // _findAreaPt
-    assert(_db._data);
+spatialdata::spatialdb::SimpleDBQuery::_findAreaPoint(std::vector<Weighting>* pWeights) { // _findAreaPoint
     assert(pWeights);
 
-    const size_t spaceDim = _db._data->getSpaceDim();
+    const size_t spaceDim = _data.getSpaceDim();
 
     // best case is to use next nearest pt
-    const size_t nearIndexA = (*pWeights)[0].nearIndex;
+    const size_t nearIndexA = (*pWeights)[0].i_near;
     const size_t locIndexA = _nearest[nearIndexA];
     double ptA[3];
-    _setPoint3(ptA, _db._data->getCoordinates(locIndexA), spaceDim);
+    _setPoint3(ptA, _data.getCoordinates(locIndexA), spaceDim);
 
-    const size_t nearIndexB = (*pWeights)[1].nearIndex;
+    const size_t nearIndexB = (*pWeights)[1].i_near;
     const size_t locIndexB = _nearest[nearIndexB];
     double ptB[3];
-    _setPoint3(ptB, _db._data->getCoordinates(locIndexB), spaceDim);
+    _setPoint3(ptB, _data.getCoordinates(locIndexB), spaceDim);
 
     double wtA = 0;
     double wtB = 0;
@@ -414,14 +411,14 @@ spatialdata::spatialdb::SimpleDBQuery::_findAreaPt(std::vector<WtStruct>* pWeigh
     size_t nearIndexC = nearIndexB + 1;
     while (nearIndexC < nearSize) {
         const size_t locIndexC = _nearest[nearIndexC];
-        _setPoint3(ptC, _db._data->getCoordinates(locIndexC), spaceDim);
+        _setPoint3(ptC, _data.getCoordinates(locIndexC), spaceDim);
 
         double areaABC = 0;
         double dirABC[3];
         _area(&areaABC, dirABC, ptA, ptB, ptC);
 
 #if 0
-        // Alternate method of determining collinearity.
+        // Alternate method of determining co-linearity.
         // Compute unit vectors AB and AC, then compute the dot product.
         // If the absolute value of the dot product is somewhat less than 1,
         // the points are not collinear.
@@ -459,10 +456,10 @@ spatialdata::spatialdb::SimpleDBQuery::_findAreaPt(std::vector<WtStruct>* pWeigh
 #endif
             // project P onto abc plane
             double qProj[3];
-            const double qmod = dirABC[0]*_q[0] + dirABC[1]*_q[1] + dirABC[2]*_q[2];
-            qProj[0] = _q[0] - dirABC[0]*qmod;
-            qProj[1] = _q[1] - dirABC[1]*qmod;
-            qProj[2] = _q[2] - dirABC[2]*qmod;
+            const double qmod = dirABC[0]*_queryPoint[0] + dirABC[1]*_queryPoint[1] + dirABC[2]*_queryPoint[2];
+            qProj[0] = _queryPoint[0] - dirABC[0]*qmod;
+            qProj[1] = _queryPoint[1] - dirABC[1]*qmod;
+            qProj[2] = _queryPoint[2] - dirABC[2]*qmod;
 
             // wtA = areaBCQ / areaABC * DotProduct(dirBCQ, dirABC);
             double areaBCQ = 0;
@@ -505,34 +502,33 @@ spatialdata::spatialdb::SimpleDBQuery::_findAreaPt(std::vector<WtStruct>* pWeigh
     (*pWeights)[0].wt = wtA;
     (*pWeights)[1].wt = wtB;
     (*pWeights)[2].wt = wtC;
-    (*pWeights)[2].nearIndex = nearIndexC;
-} // _findAreaPt
+    (*pWeights)[2].i_near = nearIndexC;
+} // _findAreaPoint
 
 
 // ----------------------------------------------------------------------
 void
-spatialdata::spatialdb::SimpleDBQuery::_findVolumePt(std::vector<WtStruct>* pWeights) {
-    assert(_db._data);
+spatialdata::spatialdb::SimpleDBQuery::_findVolumePoint(std::vector<Weighting>* pWeights) {
     assert(pWeights);
 
     // best case is to use next nearest pt
 
-    const size_t spaceDim = _db._data->getSpaceDim();
+    const size_t spaceDim = _data.getSpaceDim();
 
-    const size_t nearIndexA = (*pWeights)[0].nearIndex;
+    const size_t nearIndexA = (*pWeights)[0].i_near;
     const size_t locIndexA = _nearest[nearIndexA];
     double ptA[3];
-    _setPoint3(ptA, _db._data->getCoordinates(locIndexA), spaceDim);
+    _setPoint3(ptA, _data.getCoordinates(locIndexA), spaceDim);
 
-    const size_t nearIndexB = (*pWeights)[1].nearIndex;
+    const size_t nearIndexB = (*pWeights)[1].i_near;
     const size_t locIndexB = _nearest[nearIndexB];
     double ptB[3];
-    _setPoint3(ptB, _db._data->getCoordinates(locIndexB), spaceDim);
+    _setPoint3(ptB, _data.getCoordinates(locIndexB), spaceDim);
 
-    const size_t nearIndexC = (*pWeights)[2].nearIndex;
+    const size_t nearIndexC = (*pWeights)[2].i_near;
     const size_t locIndexC = _nearest[nearIndexC];
     double ptC[3];
-    _setPoint3(ptC, _db._data->getCoordinates(locIndexC), spaceDim);
+    _setPoint3(ptC, _data.getCoordinates(locIndexC), spaceDim);
 
     double wtA = 0;
     double wtB = 0;
@@ -545,7 +541,7 @@ spatialdata::spatialdb::SimpleDBQuery::_findVolumePt(std::vector<WtStruct>* pWei
     size_t nearIndexD = nearIndexC + 1;
     while (nearIndexD < nearSize) {
         const size_t locIndexD = _nearest[nearIndexD];
-        _setPoint3(ptD, _db._data->getCoordinates(locIndexD), spaceDim);
+        _setPoint3(ptD, _data.getCoordinates(locIndexD), spaceDim);
 
         // make sure A,B,C,D are not coplanar by checking if volume of
         // tetrahedron ABCD is not a tiny fraction of the distance AB
@@ -562,22 +558,22 @@ spatialdata::spatialdb::SimpleDBQuery::_findVolumePt(std::vector<WtStruct>* pWei
         const double tolerance = 1.0e-06;
         if (fabs(abcd) > tolerance*ab3) {
             // volume pbcd
-            const double pbcd = _volume(_q, ptB, ptC, ptD);
+            const double pbcd = _volume(_queryPoint, ptB, ptC, ptD);
             // wtA = vol(pbcd)/vol(abcd)
             wtA = pbcd / abcd;
 
             // volume apcd
-            const double apcd = _volume(ptA, _q, ptC, ptD);
+            const double apcd = _volume(ptA, _queryPoint, ptC, ptD);
             // wtB = vol(apcd)/vol(abcd)
             wtB = apcd / abcd;
 
             // volume abpd
-            const double abpd = _volume(ptA, ptB, _q, ptD);
+            const double abpd = _volume(ptA, ptB, _queryPoint, ptD);
             // wtC = vol(abpd)/vol(abcd)
             wtC = abpd / abcd;
 
             // volume abcp
-            const double abcp = _volume(ptA, ptB, ptC, _q);
+            const double abcp = _volume(ptA, ptB, ptC, _queryPoint);
             // wtD = vol(abcp)/vol(abcd)
             wtD = abcp / abcd;
 
@@ -600,8 +596,8 @@ spatialdata::spatialdb::SimpleDBQuery::_findVolumePt(std::vector<WtStruct>* pWei
     (*pWeights)[1].wt = wtB;
     (*pWeights)[2].wt = wtC;
     (*pWeights)[3].wt = wtD;
-    (*pWeights)[3].nearIndex = nearIndexD;
-} // _findVolumePt
+    (*pWeights)[3].i_near = nearIndexD;
+} // _findVolumePoint
 
 
 // ----------------------------------------------------------------------

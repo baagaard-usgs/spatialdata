@@ -14,15 +14,12 @@
 #include <string> // HASA std::string
 
 /// C++ object for time dependence in spatial databases.
-class spatialdata::spatialdb::TimeHistory { // class TimeHistory
+class spatialdata::spatialdb::TimeHistory {
     friend class TestTimeHistory;
 
 public:
 
     // PUBLIC METHODS /////////////////////////////////////////////////////
-
-    /// Default constructor.
-    TimeHistory(void);
 
     /** Constructor with description.
      *
@@ -35,7 +32,7 @@ public:
 
     /** Set description of time history.
      *
-     * @param description Description for time history.
+     * @param[in] description Description of database.
      */
     void setDescription(const char* description);
 
@@ -47,9 +44,9 @@ public:
 
     /** Set filename for time history.
      *
-     * @param name Name of file.
+     * @param filename Name of file.
      */
-    void setFilename(const char* name);
+    void setFilename(const char* filename);
 
     /** Set filename for time history.
      *
@@ -93,20 +90,18 @@ private:
 
     std::string _description; ///< Description of time history.
     std::string _filename; ///< Name of time history file
-    double* _time; ///< Time stamps for points in time history.
-    double* _amplitude; ///< Amplitude at points in time history.
-    size_t _npts; ///< Number of points in time history.
+    std::vector<double> _time; ///< Time stamps for points in time history.
+    std::vector<double> _amplitude; ///< Amplitude at points in time history.
     size_t _ilower; ///< Current index for point preceding current time.
 
 private:
 
     // NOT IMPLEMENTED ////////////////////////////////////////////////////
 
+    TimeHistory(void); ///< Not implemented
     TimeHistory(const TimeHistory&); ///< Not implemented
     const TimeHistory& operator=(const TimeHistory&); ///< Not implemented
 
 }; // class TimeHistory
-
-#include "TimeHistory.icc" // inline methods
 
 // End of file
