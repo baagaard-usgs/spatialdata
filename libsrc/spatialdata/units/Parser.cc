@@ -16,6 +16,8 @@
 #include <stdexcept> // USES std::runtime_error
 #include <assert.h> // USES assert()
 
+PyObject* spatialdata::units::Parser::_parser = nullptr;
+
 // ----------------------------------------------------------------------
 // Default constructor
 spatialdata::units::Parser::Parser(void) {
@@ -25,21 +27,23 @@ spatialdata::units::Parser::Parser(void) {
         Py_Initialize();
     }
 
-    // Should check for NULL, decode the exception, and throw a C++ equivalent
-    PyObject* mod = PyImport_ImportModule("pythia.pyre.units");
-    if (!mod) {
-        throw std::runtime_error("Could not import module 'pythia.pyre.units'.");
-    } // if
-    PyObject* cls = PyObject_GetAttrString(mod, "parser");
-    if (!cls) {
-        throw std::runtime_error("Could not get 'parser' attribute in pythia.pyre.units module.");
-    } // if
-    _parser = PyObject_CallFunctionObjArgs(cls, NULL);
     if (!_parser) {
-        throw std::runtime_error("Could not create parser Python object.");
+        // Should check for NULL, decode the exception, and throw a C++ equivalent
+        PyObject* mod = PyImport_ImportModule("pythia.pyre.units");
+        if (!mod) {
+            throw std::runtime_error("Could not import module 'pythia.pyre.units'.");
+        } // if
+        PyObject* cls = PyObject_GetAttrString(mod, "parser");
+        Py_DECREF(mod);
+        if (!cls) {
+            throw std::runtime_error("Could not get 'parser' attribute in pythia.pyre.units module.");
+        } // if
+        _parser = PyObject_CallFunctionObjArgs(cls, NULL);
+        Py_DECREF(cls);
+        if (!_parser) {
+            throw std::runtime_error("Could not create parser Python object.");
+        } // if
     } // if
-    Py_DECREF(cls);
-    Py_DECREF(mod);
 } // constructor
 
 
@@ -50,7 +54,7 @@ spatialdata::units::Parser::~Parser(void) {
 
     if (!_alreadyInitialized) {
         Py_Finalize();
-    }
+    } // if
 } // destructor
 
 
@@ -101,7 +105,7 @@ spatialdata::units::Parser::parse(const char* units) {
     Py_DECREF(pyUnit);
 
     return scale;
-} // parser
+} // parse
 
 
 // End of file

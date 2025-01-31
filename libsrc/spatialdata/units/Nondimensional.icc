@@ -55,7 +55,7 @@ spatialdata::units::Nondimensional::getTemperatureScale(void) const {
 inline
 double
 spatialdata::units::Nondimensional::nondimensionalize(const double value,
-                                                      const double scale) const {
+                                                      const double scale) {
     return value / scale;
 }
 
@@ -65,7 +65,7 @@ inline
 void
 spatialdata::units::Nondimensional::nondimensionalize(double* const values,
                                                       const size_t nvalues,
-                                                      const double scale) const { // nondimensionalize
+                                                      const double scale) {
     assert( (0 < nvalues && values) ||
             (0 == nvalues && !values) );
 
@@ -80,7 +80,7 @@ inline
 void
 spatialdata::units::Nondimensional::nondimensionalize(float* const values,
                                                       const size_t nvalues,
-                                                      const double scale) const { // nondimensionalize
+                                                      const double scale) {
     assert( (0 < nvalues && values) ||
             (0 == nvalues && !values) );
 
@@ -94,7 +94,7 @@ spatialdata::units::Nondimensional::nondimensionalize(float* const values,
 inline
 double
 spatialdata::units::Nondimensional::dimensionalize(const double value,
-                                                   const double scale) const {
+                                                   const double scale) {
     return value * scale;
 }
 
@@ -104,7 +104,7 @@ inline
 void
 spatialdata::units::Nondimensional::dimensionalize(double* const values,
                                                    const size_t nvalues,
-                                                   const double scale) const { // dimensionalize
+                                                   const double scale) {
     assert( (0 < nvalues && values) ||
             (0 == nvalues && !values) );
 
@@ -119,7 +119,7 @@ inline
 void
 spatialdata::units::Nondimensional::dimensionalize(float* const values,
                                                    const size_t nvalues,
-                                                   const double scale) const { // dimensionalize
+                                                   const double scale) {
     assert( (0 < nvalues && values) ||
             (0 == nvalues && !values) );
 

@@ -32,32 +32,6 @@ spatialdata::units::Nondimensional::~Nondimensional(void) {}
 
 
 // ----------------------------------------------------------------------
-// Copy constructor.
-spatialdata::units::Nondimensional::Nondimensional(const Nondimensional& dim) :
-    _length(dim._length),
-    _pressure(dim._pressure),
-    _time(dim._time),
-    _density(dim._density),
-    _temperature(dim._temperature) {}
-
-
-// ----------------------------------------------------------------------
-// Assignment operator.
-const spatialdata::units::Nondimensional&
-spatialdata::units::Nondimensional::operator=(const Nondimensional& dim) {
-    if (this != &dim) {
-        _length = dim._length;
-        _pressure = dim._pressure;
-        _time = dim._time;
-        _density = dim._density;
-        _temperature = dim._temperature;
-    } // if
-
-    return *this;
-} // operator=
-
-
-// ----------------------------------------------------------------------
 // Set value to nondimensionalize length scale in meters (SI units).
 void
 spatialdata::units::Nondimensional::setLengthScale(const double value) {

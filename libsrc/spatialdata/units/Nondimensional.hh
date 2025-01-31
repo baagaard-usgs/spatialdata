@@ -11,7 +11,7 @@
 
 #include "unitsfwd.hh"
 
-#include <stddef.h> // USES size_t
+#include <cstddef> // USES size_t
 
 /// C++ object for managing parameters defining a coordinate system
 class spatialdata::units::Nondimensional { // class Nondimensional
@@ -26,19 +26,6 @@ public:
 
     /// Default destructor
     ~Nondimensional(void);
-
-    /** Copy constructor.
-     *
-     * @param dim Object to copy.
-     */
-    Nondimensional(const Nondimensional& dim);
-
-    /** Assignment operator.
-     *
-     * @param dim Object to copy.
-     * @returns Copy of this.
-     */
-    const Nondimensional& operator=(const Nondimensional& dim);
 
     /** Set value to nondimensionalize length scale in meters (SI units).
      *
@@ -118,8 +105,9 @@ public:
      * @param scale Scale used to nondimensionalize value.
      * @returns Dimensionless value.
      */
+    static
     double nondimensionalize(const double value,
-                             const double scale) const;
+                             const double scale);
 
     /** Make value dimensionless.
      *
@@ -127,8 +115,9 @@ public:
      * @param value Value with dimensions in SI units.
      * @returns Scale used to nondimensionalize value.
      */
+    static
     double dimensionalize(const double value,
-                          const double scale) const;
+                          const double scale);
 
     /** Make values dimensionless.
      *
@@ -136,9 +125,10 @@ public:
      * @param nvalues Number of values.
      * @param scale Scale used to nondimensionalize value.
      */
+    static
     void nondimensionalize(double* const values,
                            const size_t nvalues,
-                           const double scale) const;
+                           const double scale);
 
     /** Make values dimensionless.
      *
@@ -146,9 +136,10 @@ public:
      * @param nvalues Number of values.
      * @param scale Scale used to nondimensionalize value.
      */
+    static
     void nondimensionalize(float* const values,
                            const size_t nvalues,
-                           const double scale) const;
+                           const double scale);
 
     /** Make value dimensionless.
      *
@@ -156,9 +147,10 @@ public:
      * @param nvalues Number of values.
      * @param scale Scale used to nondimensionalize value.
      */
+    static
     void dimensionalize(double* const values,
                         const size_t nvalues,
-                        const double scale) const;
+                        const double scale);
 
     /** Make value dimensionless.
      *
@@ -166,9 +158,17 @@ public:
      * @param nvalues Number of values.
      * @param scale Scale used to nondimensionalize value.
      */
+    static
     void dimensionalize(float* const values,
                         const size_t nvalues,
-                        const double scale) const;
+                        const double scale);
+
+private:
+
+    // PRIVATE METHODS ////////////////////////////////////////////////////
+
+    Nondimensional(const Nondimensional& dim); ///< Not implemented.
+    const Nondimensional& operator=(const Nondimensional& dim); ///< Not implemented.
 
 private:
 

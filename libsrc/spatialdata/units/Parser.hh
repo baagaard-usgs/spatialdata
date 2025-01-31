@@ -43,7 +43,7 @@ private:
 
     // PRIVATE MEMBERS ////////////////////////////////////////////////////
 
-    PyObject* _parser;
+    static PyObject* _parser;
     bool _alreadyInitialized;
 
 }; // class Parser
