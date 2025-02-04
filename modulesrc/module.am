@@ -10,7 +10,7 @@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/libsrc \
-	-I$(NUMPY_INCDIR) \
-	-I$(PYTHON_INCDIR)
+	$(PYBIND11_CPPFLAGS)
+
 
 # End of file

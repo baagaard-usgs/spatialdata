@@ -16,14 +16,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign subdir-objects tar-pax])
 
 dnl ----------------------------------------------------------------------
-dnl SWIG
-AC_ARG_ENABLE([swig],
-    [AC_HELP_STRING([--enable-swig],
-        [enable generating modules with SWIG) @<:@default=no@:>@])],
-	[if test "$enableval" = yes ; then enable_swig=yes; else enable_swig=no; fi],
-	[enable_swig=no])
-AM_CONDITIONAL([ENABLE_SWIG], [test "$enable_swig" = yes])
-
 dnl TESTING w/Catch2 and Python unittest
 AC_ARG_ENABLE([testing],
 	[  --enable-testing        Enable unit testing with Catch2 (requires Catch2) [[default=no]]],
@@ -105,13 +97,11 @@ CIT_PYTHON_MODULE([pythia],[1.1.0])
 
 dnl NUMPY
 CIT_NUMPY_PYTHON_MODULE
-CIT_NUMPY_INCDIR
 CIT_PYTHON_MODULE([numpy], [1.20.0])
 
-dnl SWIG
-if test "$enable_swig" = "yes" ; then
-  AC_PROG_SWIG([4.0.0])
-fi
+dnl pybind11
+CIT_PYTHON_MODULE([pybind11],[2.0.0])
+CIT_PYBIND11_INCLUDES
 
 dnl TEST COVERAGE
 if test "$enable_test_coverage" = "yes" ; then
