@@ -39,7 +39,7 @@ class TestCSGeoLocal(unittest.TestCase):
         originX, originY, yAzimuth = cs.getLocal()
         self.assertEqual(20.0, originX)
         self.assertEqual(21.0, originY)
-        self.assertEqual(30.0,  yAzimuth)
+        self.assertEqual(30.0, yAzimuth)
 
 
 def load_tests(loader, tests, pattern):

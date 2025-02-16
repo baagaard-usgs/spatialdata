@@ -24,6 +24,7 @@ class TestGravityField(unittest.TestCase):
 
     def test_database(self):
         locs = numpy.array([[1.0, 2.0, 3.0], [5.6, 4.2, 8.6]], numpy.float64)
+        queryValues = ["gravity_field_x", "gravity_field_y", "gravity_field_z"]
         from spatialdata.geocoords.CSCart import CSCart
         cs = CSCart()
         cs._configure()
@@ -33,12 +34,7 @@ class TestGravityField(unittest.TestCase):
 
         db = self._db
         db.open()
-        data = numpy.zeros(dataE.shape, dtype=numpy.float64)
-        err = []
-        nlocs = locs.shape[0]
-        for i in range(nlocs):
-            e = db.query(data[i, :], locs[i, :], cs)
-            err.append(e)
+        data, err = db.query(locs, cs, queryValues)
         db.close()
 
         self.assertEqual(len(errE), len(err))

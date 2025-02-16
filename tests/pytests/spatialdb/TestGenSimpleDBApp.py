@@ -29,8 +29,7 @@ class TestGenSimpleDBApp(unittest.TestCase):
 
         # Test write using query
         db = SimpleDB()
-        db.inventory.iohandler.inventory.filename = "data/gen1Din2D.spatialdb"
-        db.inventory.iohandler._configure()
+        db.inventory.filename = "data/gen1Din2D.spatialdb"
         db.inventory.label = "test"
         db.inventory.queryType = "nearest"
         db._configure()
@@ -46,13 +45,7 @@ class TestGenSimpleDBApp(unittest.TestCase):
         cs._configure()
 
         db.open()
-        db.setQueryValues(["two", "one"])
-        data = numpy.zeros(dataE.shape, dtype=numpy.float64)
-        err = []
-        nlocs = qlocs.shape[0]
-        for i in range(nlocs):
-            e = db.query(data[i, :], qlocs[i, :], cs)
-            err.append(e)
+        data, err = db.query(qlocs, cs, ["two", "one"])
         db.close()
 
         self.assertEqual(len(errE), len(err))

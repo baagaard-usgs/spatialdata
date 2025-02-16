@@ -15,7 +15,6 @@ import unittest
 import numpy
 from spatialdata.testing.TestCases import make_suite
 
-
 class TestTimeHistory(unittest.TestCase):
 
     def test_timehistory(self):
@@ -30,13 +29,7 @@ class TestTimeHistory(unittest.TestCase):
         th._configure()
 
         th.open()
-        nlocs = timeQ.shape[0]
-        amplitude = numpy.zeros((nlocs,), dtype=numpy.float64)
-        err = numpy.zeros((nlocs,), dtype=numpy.int32)
-
-        for i in range(nlocs):
-            (e, amplitude[i]) = th.query(timeQ[i])
-            err[i] = e
+        amplitude, err = th.query(timeQ)
         th.close()
 
         self.assertEqual(len(errE), len(err))
@@ -48,6 +41,38 @@ class TestTimeHistory(unittest.TestCase):
             self.assertEqual(dE, d)
         for vE, v in zip(numpy.reshape(amplitudeE, -1), numpy.reshape(amplitude, -1)):
             self.assertAlmostEqual(vE, v, 6)
+
+    def test_io(self):
+        """
+        Test write().
+        """
+        filename = "data/test.timedb"
+        time = numpy.array([0.0, 2.0, 6.0, 7.0, 10.0], dtype=numpy.float64)
+        amplitude = numpy.array([0.0, 0.2, 0.1, -0.1, 2.0], dtype=numpy.float64)
+        units = "year"
+
+        # Write database
+        from spatialdata.spatialdb import TimeHistoryIO
+        TimeHistoryIO.write(time, amplitude, units, filename)
+
+        # Test write
+        filenameE = "data/test_okay.timedb"
+
+        fin = open(filenameE, "r", encoding="utf-8")
+        linesE = fin.readlines()
+        fin.close()
+
+        fin = open(filename, "r", encoding="utf-8")
+        lines = fin.readlines()
+        fin.close()
+
+        self.assertEqual(len(linesE), len(lines))
+        iline = 0
+        for (lineE, line) in zip(linesE, lines):
+            if lineE != line:
+                print("Error found in line %d in file '%s' is incorrect." % (iline, filename))
+                self.assertTrue(False)
+            iline += 1
 
 
 def load_tests(loader, tests, pattern):

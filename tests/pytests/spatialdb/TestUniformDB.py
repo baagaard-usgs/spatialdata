@@ -31,19 +31,13 @@ class TestUniformDB(unittest.TestCase):
         from spatialdata.geocoords.CSCart import CSCart
         cs = CSCart()
         cs._configure()
-        queryVals = ["three", "one"]
+        queryValues = ["three", "one"]
         dataE = numpy.array([[3.3e-2, 1.1], [3.3e-2, 1.1]], numpy.float64)
         errE = [0, 0]
 
         db = self._db
         db.open()
-        db.setQueryValues(queryVals)
-        data = numpy.zeros(dataE.shape, dtype=numpy.float64)
-        err = []
-        nlocs = locs.shape[0]
-        for i in range(nlocs):
-            e = db.query(data[i, :], locs[i, :], cs)
-            err.append(e)
+        data, err = db.query(locs, cs, queryValues)
         db.close()
 
         self.assertEqual(len(errE), len(err))

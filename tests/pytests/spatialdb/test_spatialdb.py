@@ -12,29 +12,23 @@
 
 from spatialdata.testing.UnitTestApp import UnitTestApp
 
-import TestSimpleIOAscii
 import TestSimpleDB
 import TestUniformDB
 import TestAnalyticDB
 import TestSimpleGridDB
-import TestUserFunctionDB
 import TestCompositeDB
 import TestGravityField
-import TestTimeHistoryIO
 import TestTimeHistory
 import TestGenSimpleDBApp
 
 
 TEST_MODULES = [
-    TestSimpleIOAscii,
     TestSimpleDB,
     TestUniformDB,
     TestAnalyticDB,
     TestSimpleGridDB,
-    TestUserFunctionDB,
     TestCompositeDB,
     TestGravityField,
-    TestTimeHistoryIO,
     TestTimeHistory,
     TestGenSimpleDBApp,
 ]
