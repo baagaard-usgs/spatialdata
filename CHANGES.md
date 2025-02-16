@@ -1,3 +1,14 @@
+## Version 4.0.0 (2025/XX/XX)
+
+* **Changed**
+  * Simplified SimpleDB interface (removed `iohandler`; `filename` is in SimpleDB).
+  * Updated the CompositeDB to be a virtual database with one or more spatial databases.
+  * Simplified interface to SimpleDB and SimpleGridDB writers (`write` is now a module function).
+  * Simplified Python interface for querying spatial databases.
+  * Refactored C++ code for greater consistency across the spatial database implementations.
+  * Switch to using C++ objects (std::vector for arrays) in most object interfaces.
+  * Replaced use of SWIG for C++/Python interface with pybind11.
+
 ## Version 3.1.3 (2024/10/31)
 
 * **Changed**

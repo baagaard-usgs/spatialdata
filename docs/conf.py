@@ -22,7 +22,7 @@ copyright = '2010-2025, University of California, Davis'
 author = 'Brad T. Aagaard'
 
 # The full version, including alpha/beta/rc tags
-release = '3.1.3'
+release = '4.0.0'
 
 
 # -- General configuration ---------------------------------------------------

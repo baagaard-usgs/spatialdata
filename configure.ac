@@ -9,7 +9,7 @@ dnl See https://mit-license.org/ and LICENSE.md and for license information.
 dnl ================================================================================================
 
 AC_PREREQ(2.59)
-AC_INIT([spatialdata], [3.1.3], [baagaard@usgs.gov])
+AC_INIT([spatialdata], [4.0.0], [baagaard@usgs.gov])
 AC_CONFIG_HEADER([portinfo])
 AC_CONFIG_AUX_DIR([./aux-config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -107,7 +107,6 @@ AC_CONFIG_FILES([Makefile
 	libsrc/spatialdata/utils/Makefile
 	libsrc/spatialdata/muparser/Makefile
 	modulesrc/Makefile
-	modulesrc/include/Makefile
 	modulesrc/geocoords/Makefile
 	modulesrc/spatialdb/Makefile
 	modulesrc/units/Makefile
