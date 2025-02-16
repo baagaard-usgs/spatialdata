@@ -9,10 +9,13 @@
 # =================================================================================================
 
 from .CSGeo import CSGeo
-from .geocoords import CSGeoLocal as ModuleCSGeoLocal
+from ._geocoords import CSGeoLocal as CxxCSGeoLocal
 
 
-class CSGeoLocal(CSGeo, ModuleCSGeoLocal):
+class CSGeoLocalMeta(type(CSGeo), type(CxxCSGeoLocal)):
+    pass
+
+class CSGeoLocal(CSGeo, CxxCSGeoLocal, metaclass=CSGeoLocalMeta):
     """
     Python manager for local, rotated geographic coordinate systems.
 
@@ -20,6 +23,8 @@ class CSGeoLocal(CSGeo, ModuleCSGeoLocal):
     """
     DOC_CONFIG = {
         "cfg": """
+            coordsys = spatialdata.geocoords.CSGeoLocal
+
             [coordsys]
             # Local, rotated UTM Zone 10 coordinate system
             crs_string = EPSG:29610
@@ -55,6 +60,7 @@ class CSGeoLocal(CSGeo, ModuleCSGeoLocal):
         Constructor.
         """
         CSGeo.__init__(self, name)
+        CxxCSGeoLocal.__init__(self)
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -63,16 +69,9 @@ class CSGeoLocal(CSGeo, ModuleCSGeoLocal):
         Setup members using inventory.
         """
         CSGeo._configure(self)
-        ModuleCSGeoLocal.setString(self, self.crsString)
-        ModuleCSGeoLocal.setSpaceDim(self, self.spaceDim)
-        ModuleCSGeoLocal.setLocal(self, self.originX, self.originY, self.yAzimuth)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleCSGeoLocal.__init__(self)
-        return
+        CxxCSGeoLocal.setString(self, self.crsString)
+        CxxCSGeoLocal.setSpaceDim(self, self.spaceDim)
+        CxxCSGeoLocal.setLocal(self, self.originX, self.originY, self.yAzimuth)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////

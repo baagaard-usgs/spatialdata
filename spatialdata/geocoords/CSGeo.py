@@ -9,10 +9,13 @@
 # =================================================================================================
 
 from .CoordSys import CoordSys
-from .geocoords import CSGeo as ModuleCSGeo
+from ._geocoords import CSGeo as CxxCSGeo
 
 
-class CSGeo(CoordSys, ModuleCSGeo):
+class CSGeoMeta(type(CoordSys), type(CxxCSGeo)):
+    pass
+
+class CSGeo(CoordSys, CxxCSGeo, metaclass=CSGeoMeta):
     """
     Python manager for geographic coordinate systems.
 
@@ -20,6 +23,8 @@ class CSGeo(CoordSys, ModuleCSGeo):
     """
     DOC_CONFIG = {
         "cfg": """
+            coordsys = spatialdata.geocoords.CSGeo
+
             [coordsys]
             # WGS84 (latitude, longitude) coordinate system
             crs_string = EPSG:4326
@@ -42,7 +47,7 @@ class CSGeo(CoordSys, ModuleCSGeo):
         Constructor.
         """
         CoordSys.__init__(self, name)
-        return
+        CxxCSGeo.__init__(self)
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -51,16 +56,8 @@ class CSGeo(CoordSys, ModuleCSGeo):
         Setup members using inventory.
         """
         CoordSys._configure(self)
-        ModuleCSGeo.setString(self, self.crsString)
-        ModuleCSGeo.setSpaceDim(self, self.spaceDim)
-        return
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleCSGeo.__init__(self)
-        return
+        CxxCSGeo.setString(self, self.crsString)
+        CxxCSGeo.setSpaceDim(self, self.spaceDim)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////

@@ -26,11 +26,12 @@ EXTRA_DIST = \
 	spatialdb/GravityField.py \
 	spatialdb/SCECCVMH.py \
 	spatialdb/SimpleDB.py \
-	spatialdb/SimpleGridAscii.py \
+	spatialdb/SimpleDBData.py \
+	spatialdb/SimpleDBIO.py \
 	spatialdb/SimpleGridDB.py \
-	spatialdb/SimpleIO.py \
-	spatialdb/SimpleIOAscii.py \
-	spatialdb/SpatialDBObj.py \
+	spatialdb/SimpleGridDBData.py \
+	spatialdb/SimpleGridDBIO.py \
+	spatialdb/SpatialDB.py \
 	spatialdb/TimeHistory.py \
 	spatialdb/TimeHistoryIO.py \
 	spatialdb/UniformDB.py \

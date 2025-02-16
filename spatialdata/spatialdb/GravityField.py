@@ -8,11 +8,14 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import GravityField as ModuleGravityField
+from .SpatialDB import SpatialDB
+from ._spatialdb import GravityField as CxxGravityField
 
 
-class GravityField(SpatialDBObj, ModuleGravityField):
+class GravityFieldMeta(type(SpatialDB), type(CxxGravityField)):
+    pass
+
+class GravityField(SpatialDB, CxxGravityField, metaclass=GravityFieldMeta):
     """
     Spatial database with gravity field information.
 
@@ -43,8 +46,8 @@ class GravityField(SpatialDBObj, ModuleGravityField):
         """
         Constructor.
         """
-        SpatialDBObj.__init__(self, name)
-        return
+        SpatialDB.__init__(self, name)
+        CxxGravityField.__init__(self)
 
     def _defaults(self):
         self.description = "Gravity field"
@@ -53,17 +56,11 @@ class GravityField(SpatialDBObj, ModuleGravityField):
         """
         Set members based on inventory.
         """
-        SpatialDBObj._configure(self)
+        SpatialDB._configure(self)
         self._validateParameters(self.inventory)
         dir = list(map(float, self.gravityDir))
-        ModuleGravityField.setGravityDir(self, dir[0], dir[1], dir[2])
-        ModuleGravityField.setGravityAcc(self, self.acceleration.value)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleGravityField.__init__(self)
+        CxxGravityField.setGravityDir(self, dir[0], dir[1], dir[2])
+        CxxGravityField.setGravityAcc(self, self.acceleration.value)
 
     def _validateParameters(self, params):
         """

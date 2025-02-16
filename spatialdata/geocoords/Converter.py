@@ -25,8 +25,8 @@ def convert(points, csDest, csSrc):
                   csSrc.getSpaceDim(), csDest.getSpaceDim())
         raise ValueError(msg)
 
-    from . import geocoords
-    converter = geocoords.Converter()
+    from . import _geocoords
+    converter = _geocoords.Converter()
     converter.convert(points, csDest, csSrc)
     return
 

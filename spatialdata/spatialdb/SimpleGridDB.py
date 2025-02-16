@@ -10,8 +10,8 @@
 
 import pathlib
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import SimpleGridDB as ModuleSimpleGridDB
+from .SpatialDB import SpatialDB
+from ._spatialdb import SimpleGridDB as CxxSimpleGridDB
 
 
 def validateFilename(value):
@@ -21,11 +21,15 @@ def validateFilename(value):
     if 0 == len(value):
         raise ValueError("Name of SimpleGridDB file must be specified.")
     if not pathlib.Path(value).is_file():
-        raise IOError(f"Spatial database file '{value}' not found.")
+        raise IOError(f"SimpleGridDB file '{value}' not found.")
     return value
 
 
-class SimpleGridDB(SpatialDBObj, ModuleSimpleGridDB):
+class SimpleGridDBMeta(type(SpatialDB), type(CxxSimpleGridDB)):
+    pass
+
+
+class SimpleGridDB(SpatialDB, CxxSimpleGridDB, metaclass=SimpleGridDBMeta):
     """
     Simple spatial database on a logically rectangular grid aligned with the coordinate axes.
     Points along the coordinate axes do not have to be uniformly spaced.
@@ -34,6 +38,8 @@ class SimpleGridDB(SpatialDBObj, ModuleSimpleGridDB):
     """
     DOC_CONFIG = {
         "cfg": """
+            db = spatialdata.spatialdb.SimpleGridDB
+
             [db]
             description = Material properties
             filename = mat_elastic.spatialdb
@@ -56,8 +62,8 @@ class SimpleGridDB(SpatialDBObj, ModuleSimpleGridDB):
         """
         Constructor.
         """
-        SpatialDBObj.__init__(self, name)
-        return
+        SpatialDB.__init__(self, name)
+        CxxSimpleGridDB.__init__(self, "SimpleGridDB :UNKNOWN:")
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -65,23 +71,17 @@ class SimpleGridDB(SpatialDBObj, ModuleSimpleGridDB):
         """
         Set members based on inventory.
         """
-        SpatialDBObj._configure(self)
-        ModuleSimpleGridDB.setFilename(self, self.filename)
-        ModuleSimpleGridDB.setQueryType(self, self._parseQueryString(self.queryType))
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleSimpleGridDB.__init__(self)
+        SpatialDB._configure(self)
+        CxxSimpleGridDB.setFilename(self, self.filename)
+        CxxSimpleGridDB.setQueryType(self, self._parseQueryString(self.queryType))
 
     def _parseQueryString(self, label):
         if label.lower() == "nearest":
-            value = ModuleSimpleGridDB.NEAREST
+            value = CxxSimpleGridDB.NEAREST
         elif label.lower() == "linear":
-            value = ModuleSimpleGridDB.LINEAR
+            value = CxxSimpleGridDB.LINEAR
         else:
-            raise ValueError("Unknown value for query type '%s' in spatial database %s." % (label, self.description))
+            raise NotImplementedError(f"Unknown query type '{label}'.")
         return value
 
 

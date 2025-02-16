@@ -8,11 +8,84 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import CompositeDB as ModuleCompositeDB
+from pythia.pyre.components.Component import Component
+from .SpatialDB import SpatialDB
+from ._spatialdb import CompositeDB as CxxCompositeDB
+
+class DBEntry(Component):
+    """
+    Information for a virtual spatial database.
+    """
+    DOC_CONFIG = {
+        "cfg": """
+            [compositedb.dbA]
+            db = spatialdata.spatialdb.SimpleDB
+            db.description = Wave speed spatial database.
+            db.filename = vpvs.spatialdb
+
+            values = [vp, vs]
+            """,
+    }
+
+    import pythia.pyre.inventory
+
+    values = pythia.pyre.inventory.list("values", default=[])
+    values.meta['tip'] = "Names of values to query in database."
+
+    from .UniformDB import UniformDB
+    db = pythia.pyre.inventory.facility("db", factory=UniformDB, family="spatial_database")
+    db.meta['tip'] = "Spatial database."
 
 
-class CompositeDB(SpatialDBObj, ModuleCompositeDB):
+    # PUBLIC METHODS /////////////////////////////////////////////////////
+
+    def __init__(self, name="dbentry"):
+        """
+        Constructor.
+        """
+        Component.__init__(self, name, facility="db_entry")
+
+    # PRIVATE METHODS ////////////////////////////////////////////////////
+
+    def _configure(self):
+        """
+        Set members based on inventory.
+        """
+        Component._configure(self)
+        self._validateParameters(self.inventory)
+
+    def _validateParameters(self, data):
+        """
+        Validate parameters.
+        """
+        if (0 == len(data.values)):
+            raise ValueError(f"Error in spatial database entry '{self.name}'\n"
+                             "Names of values to query in database not set.")
+
+class EmptyBin(Component):
+  """
+  Empty container for a collection of objects.
+  """
+
+  def __init__(self, name="emptybin"):
+    """Constructor.
+    """
+    Component.__init__(self, name, facility="empty_bin")
+
+
+def dbFactory(name):
+    """Factory for spatial database items.
+    """
+    from pythia.pyre.inventory import facility
+    from spatialdata.spatialdb.UniformDB import UniformDB
+    return facility(name, family="spatial_database", factory=UniformDB)
+
+
+class CompositDBMeta(type(SpatialDB), type(CxxCompositeDB)):
+    pass
+
+
+class CompositeDB(SpatialDB, CxxCompositeDB, metaclass=CompositDBMeta):
     """
     Virtual spatial database implemented as a combination of two spatial databases.
     This spatial database is useful when you need to provide additional values beyond those present in an existing spatial database or some values have a different layout than others.
@@ -21,35 +94,30 @@ class CompositeDB(SpatialDBObj, ModuleCompositeDB):
     """
     DOC_CONFIG = {
         "cfg": """
+            db = spatialdata.spatialdb.CompositeDB
+
             [db]
-            values_A = [density]
-            values_B = [vp, vs]
+            dbs = [density, wavespeeds]
+            
+            [db.dbs.density]
+            values = [density]
+            db = spatialdata.spatialdb.UniformDB
+            db.description = Density spatial database.
+            db.values = [density]
+            db.data = [3000*kg/m**3]
 
-            db_A = spatialdata.spatialdb.UniformDB
-            db_A.description = Density spatial database.
-            db_A.values = [density]
-            db_A.data = [3000*kg/m**3]
-
-            db_B = spatialdata.spatialdb.SimpleDB
-            db_B.description = Wave speed spatial database.
-            db_B.iohandler.filename = vpvs.spatialdb
+            [db.dbs.wavespeeds]
+            values = [vp, vs]
+            db = spatialdata.spatialdb.SimpleDB
+            db.description = Wave speed spatial database.
+            db.filename = vpvs.spatialdb
             """,
     }
 
     import pythia.pyre.inventory
 
-    namesA = pythia.pyre.inventory.list("values_A", default=[])
-    namesA.meta['tip'] = "Names of values to query with database A."
-
-    namesB = pythia.pyre.inventory.list("values_B", default=[])
-    namesB.meta['tip'] = "Names of values to query with database B."
-
-    from .UniformDB import UniformDB
-    dbA = pythia.pyre.inventory.facility("db_A", factory=UniformDB, family="spatial_database")
-    dbA.meta['tip'] = "Spatial database A."
-
-    dbB = pythia.pyre.inventory.facility("db_B", factory=UniformDB, family="spatial_database")
-    dbB.meta['tip'] = "Spatial database B."
+    dbs = pythia.pyre.inventory.facilityArray("dbs", itemFactory=dbFactory, factory=EmptyBin)
+    dbs.meta['tip'] = "Names of values to query with database A."
 
     # PUBLIC METHODS /////////////////////////////////////////////////////
 
@@ -57,7 +125,8 @@ class CompositeDB(SpatialDBObj, ModuleCompositeDB):
         """
         Constructor.
         """
-        SpatialDBObj.__init__(self, name)
+        SpatialDB.__init__(self, name)
+        CxxCompositeDB.__init__(self, "CompositeDB :UNKNOWN:")
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -65,29 +134,9 @@ class CompositeDB(SpatialDBObj, ModuleCompositeDB):
         """
         Set members based on inventory.
         """
-        SpatialDBObj._configure(self)
-        self._validateParameters(self.inventory)
-        ModuleCompositeDB.setDBA(self, self.dbA, self.namesA)
-        ModuleCompositeDB.setDBB(self, self.dbB, self.namesB)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleCompositeDB.__init__(self)
-        return
-
-    def _validateParameters(self, data):
-        """
-        Validate parameters.
-        """
-        if (0 == len(data.namesA)):
-            raise ValueError("Error in spatial database '%s'\n"
-                             "Names of values to query in database A not set." % self.description)
-        if (0 == len(data.namesB)):
-            raise ValueError("Error in spatial database '%s'\n"
-                             "Names of values to query in database B not set." % self.description)
-        return
+        SpatialDB._configure(self)
+        for db in self.dbs.components():
+            CxxCompositeDB.addDB(self, db.db, db.values)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////

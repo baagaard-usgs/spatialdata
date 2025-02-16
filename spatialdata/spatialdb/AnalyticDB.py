@@ -9,11 +9,13 @@
 # =================================================================================================
 
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import AnalyticDB as ModuleAnalyticDB
+from .SpatialDB import SpatialDB
+from ._spatialdb import AnalyticDB as CxxAnalyticDB
 
+class AnalyticDBMeta(type(SpatialDB), type(CxxAnalyticDB)):
+    pass
 
-class AnalyticDB(SpatialDBObj, ModuleAnalyticDB):
+class AnalyticDB(SpatialDB, CxxAnalyticDB, metaclass=AnalyticDBMeta):
     """
     Spatial database composed of analytic functions.
 
@@ -21,6 +23,8 @@ class AnalyticDB(SpatialDBObj, ModuleAnalyticDB):
     """
     DOC_CONFIG = {
         "cfg": """
+            db = spatialdata.spatialdb.AnalyticDB
+
             [db]
             description = Uniform material properties
             values = [density, vp, vs]
@@ -47,35 +51,27 @@ class AnalyticDB(SpatialDBObj, ModuleAnalyticDB):
     cs.meta['tip'] = "Coordinate system."
 
     def __init__(self, name="AnalyticDB"):
+        """Constructor.
         """
-        Constructor.
-        """
-        SpatialDBObj.__init__(self, name)
+        SpatialDB.__init__(self, name)
+        CxxAnalyticDB.__init__(self, "AnalyticDB :UNKNOWN:")
         from pythia.pyre.units import parser
         self.parser = parser()
 
     def _configure(self):
+        """Set members based on inventory.
         """
-        Set members based on inventory.
-        """
-        SpatialDBObj._configure(self)
+        SpatialDB._configure(self)
         self._validateParameters(self.inventory)
         self.cs._configure()
-        ModuleAnalyticDB.setCoordSys(self, self.cs)
+        CxxAnalyticDB.setCoordSys(self, self.cs)
         values = []
         for v in self.values:
             values.append(v.strip())
-        ModuleAnalyticDB.setData(self, values, self.units, self.expressions)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleAnalyticDB.__init__(self)
+        CxxAnalyticDB.setData(self, values, self.units, self.expressions)
 
     def _validateParameters(self, params):
-        """
-        Validate parameters.
+        """Validate parameters.
         """
         if len(params.values) == 0:
             raise ValueError("Values in AnalyticDB '%s' not specified.", self.description)

@@ -11,7 +11,7 @@
 import pathlib
 
 from pythia.pyre.components.Component import Component
-from .spatialdb import TimeHistory as ModuleTimeHistory
+from ._spatialdb import TimeHistory as CxxTimeHistory
 
 
 def validateFilename(value):
@@ -25,7 +25,11 @@ def validateFilename(value):
     return value
 
 
-class TimeHistory(Component, ModuleTimeHistory):
+class TimeHistoryMeta(type(Component), type(CxxTimeHistory)):
+    pass
+
+
+class TimeHistory(Component, CxxTimeHistory, metaclass=TimeHistoryMeta):
     """
     Time history object for specifying temporal variation in a field.
     """
@@ -52,6 +56,7 @@ class TimeHistory(Component, ModuleTimeHistory):
         Constructor.
         """
         Component.__init__(self, name, facility="temporal_database")
+        CxxTimeHistory.__init__(self, "TimeHistory :UNKNOWN:")
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -60,25 +65,11 @@ class TimeHistory(Component, ModuleTimeHistory):
         Set attributes based on inventory.
         """
         Component._configure(self)
-        self._createModuleObj()
-        ModuleTimeHistory.setDescription(self, self.description)
-        ModuleTimeHistory.setFilename(self, self.filename)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleTimeHistory.__init__(self)
+        CxxTimeHistory.setDescription(self, self.description)
+        CxxTimeHistory.setFilename(self, self.filename)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////
-
-def createWriter(filename, description="Time history writer"):
-    writer = TimeHistory()
-    writer.setDescription(description)
-    writer.setFilename(filename)
-    return writer
-
 
 def temporal_database():
     """

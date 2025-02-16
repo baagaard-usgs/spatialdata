@@ -10,7 +10,6 @@
 
 from pythia.pyre.components.Component import Component
 
-
 class CoordSys(Component):
     """
     Python abstract base class for coordinate systems.
@@ -23,7 +22,6 @@ class CoordSys(Component):
         Constructor.
         """
         Component.__init__(self, name, facility="coordsys")
-        return
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -32,15 +30,6 @@ class CoordSys(Component):
         Setup members using inventory.
         """
         Component._configure(self)
-        self._createModuleObj()
-        return
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        raise NotImplementedError("_createModuleObj() not implemented.")
-        return
 
 
 # End of file

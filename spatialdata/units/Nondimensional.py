@@ -9,10 +9,13 @@
 # =================================================================================================
 
 from pythia.pyre.components.Component import Component
-from .units import Nondimensional as ModuleNondimensional
+from ._units import Nondimensional as CxxNondimensional
 
 
-class Nondimensional(Component, ModuleNondimensional):
+class NondimensionalMeta(type(Component), type(CxxNondimensional)):
+    pass
+
+class Nondimensional(Component, CxxNondimensional, metaclass=NondimensionalMeta):
     """
     Abstract base class for nondimensionalizing problems.
     """
@@ -24,55 +27,55 @@ class Nondimensional(Component, ModuleNondimensional):
         Constructor.
         """
         Component.__init__(self, name, facility="nondimensional")
+        CxxNondimensional.__init__(self)
 
     def _configure(self):
         Component._configure(self)
-        self._createModuleObj()
 
     def setLengthScale(self, value):
         """
         Get length scale.
         """
-        return ModuleNondimensional.setLengthScale(self, value.value)
+        return CxxNondimensional.setLengthScale(self, value.value)
 
     def getLengthScale(self):
         """
         Get length scale.
         """
         from pythia.pyre.units.length import meter
-        return ModuleNondimensional.getLengthScale(self) * meter
+        return CxxNondimensional.getLengthScale(self) * meter
 
     def setPressureScale(self, value):
         """
         Get length scale.
         """
-        return ModuleNondimensional.setPressureScale(self, value.value)
+        return CxxNondimensional.setPressureScale(self, value.value)
 
     def getPressureScale(self):
         """
         Get pressure scale.
         """
         from pythia.pyre.units.pressure import pascal
-        return ModuleNondimensional.getPressureScale(self) * pascal
+        return CxxNondimensional.getPressureScale(self) * pascal
 
     def setTimeScale(self, value):
         """
         Get time scale.
         """
-        return ModuleNondimensional.setTimeScale(self, value.value)
+        return CxxNondimensional.setTimeScale(self, value.value)
 
     def getTimeScale(self):
         """
         Get time scale.
         """
         from pythia.pyre.units.time import second
-        return ModuleNondimensional.getTimeScale(self) * second
+        return CxxNondimensional.getTimeScale(self) * second
 
     def setDensityScale(self, value):
         """
         Get density scale.
         """
-        return ModuleNondimensional.setDensityScale(self, value.value)
+        return CxxNondimensional.setDensityScale(self, value.value)
 
     def getDensityScale(self):
         """
@@ -80,20 +83,20 @@ class Nondimensional(Component, ModuleNondimensional):
         """
         from pythia.pyre.units.length import meter
         from pythia.pyre.units.mass import kilogram
-        return ModuleNondimensional.getDensityScale(self) * kilogram / meter**3
+        return CxxNondimensional.getDensityScale(self) * kilogram / meter**3
 
     def setTemperatureScale(self, value):
         """
         Get temperature scale.
         """
-        return ModuleNondimensional.setTemperatureScale(self, value.value)
+        return CxxNondimensional.setTemperatureScale(self, value.value)
 
     def getTemperatureScale(self):
         """
         Get temperature scale.
         """
         from pythia.pyre.units.temperature import kelvin
-        return ModuleNondimensional.getTemperatureScale(self) * kelvin
+        return CxxNondimensional.getTemperatureScale(self) * kelvin
 
     def nondimensionalize(self, value, scale):
         """
@@ -106,14 +109,6 @@ class Nondimensional(Component, ModuleNondimensional):
         Make value dimensional.
         """
         return value * scale
-
-    # PRIVATE METHODS ////////////////////////////////////////////////////
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleNondimensional.__init__(self)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////

@@ -17,7 +17,7 @@ __all__ = [
     "SimpleDB",
     "SimpleIOAscii",
     "SimpleIO",
-    "SpatialDBObj",
+    "SpatialDB",
     "TimeHistory",
     "TimeHistoryIO",
     "UniformDB",

@@ -9,10 +9,13 @@
 # =================================================================================================
 
 from .CoordSys import CoordSys
-from .geocoords import CSCart as ModuleCSCart
+from ._geocoords import CSCart as CxxCSCart
 
 
-class CSCart(CoordSys, ModuleCSCart):
+class CSCartMeta(type(CoordSys), type(CxxCSCart)):
+    pass
+
+class CSCart(CoordSys, CxxCSCart, metaclass=CSCartMeta):
     """
     Python manager for Cartesian coordinate systems.
 
@@ -20,6 +23,8 @@ class CSCart(CoordSys, ModuleCSCart):
     """
     DOC_CONFIG = {
         "cfg": """
+            coordsys = spatialdata.geocoodes.CSCart
+
             [coordsys]
             units = meter
             space_dim = 3
@@ -41,7 +46,7 @@ class CSCart(CoordSys, ModuleCSCart):
         Constructor.
         """
         CoordSys.__init__(self, name)
-        return
+        CxxCSCart.__init__(self)
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -54,16 +59,8 @@ class CSCart(CoordSys, ModuleCSCart):
         import pythia.pyre.units
         uparser = pythia.pyre.units.parser()
         coordUnits = uparser.parse(self.inventory.units)
-        ModuleCSCart.setToMeters(self, coordUnits.value)
-        ModuleCSCart.setSpaceDim(self, self.spaceDim)
-        return
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleCSCart.__init__(self)
-        return
+        CxxCSCart.setToMeters(self, coordUnits.value)
+        CxxCSCart.setSpaceDim(self, self.spaceDim)
 
 
 # FACTORIES ////////////////////////////////////////////////////////////

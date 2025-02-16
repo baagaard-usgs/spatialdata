@@ -53,12 +53,12 @@ class GenSimpleDBApp(Script):
     """
     DOC_CONFIG = {
         "cfg": """
-            # Create a spatial dabaset with values `Vp` and `Vs`.
+            # Create a spatial database with values `Vp` and `Vs`.
             #
             # Vp is generated from a background value given in `vp_background.spatialdb`
             # plus a perturbation given in `vp_perturbation.spatialdb`.
             # 
-            # Vs is generatef from a backgorund value given in `vs_background.spatialdb`
+            # Vs is generate from a backgorund value given in `vs_background.spatialdb`
             # multiplied by a value given in `vs_scaling.spatialdb`.
             [gensimpledb.geometry]
             reader = read_geometry
@@ -135,7 +135,7 @@ class GenSimpleDBApp(Script):
         """
         Application driver.
         """
-        from spatialdata.spatialdb.SimpleIOAscii import createWriter
+        from spatialdata.spatialdb import SimpleDBIO
 
         self._info.log("Reading geometry.")
         self.geometry.read()
@@ -155,7 +155,6 @@ class GenSimpleDBApp(Script):
                 'data': value.calculate(points, coordsys),
             })
         self._info.log("Writing database.")
-        writer = createWriter(self.filename)
-        writer.write(data)
+        SimpleDBIO.write(data, self.filename)
 
 # End of file

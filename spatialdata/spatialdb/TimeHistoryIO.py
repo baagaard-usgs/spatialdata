@@ -2,24 +2,19 @@
 # This code is part of SpatialData, developed through the Computational Infrastructure
 # for Geodynamics (https://github.com/geodynamics/spatialdata).
 #
-# Copyright (c) 2010-2025, University of California, Davis and the SpatialData Development Team.
+# Copyright (c) 2010-2024, University of California, Davis and the SpatialData Development Team.
 # All rights reserved.
 #
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
-#
 
-# @file spatialdata/geocoords/__init__.py
-#
-# @brief Python spatialdata geocoords module initialization.
 
-__all__ = [
-    'CoordSys',
-    'CSCart',
-    'CSGeo',
-    'CSGeoLocal',
-    'Converter',
-]
+def write(time, amplitude, units, filename):
+    """
+    Write time history file.
+    """
+    from ._spatialdb import TimeHistoryIO as CxxTimeHistoryIO
+    CxxTimeHistoryIO.write(time, amplitude, units, filename)
 
 
 # End of file

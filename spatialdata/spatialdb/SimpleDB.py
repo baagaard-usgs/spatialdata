@@ -8,11 +8,27 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import SimpleDB as ModuleSimpleDB
+import pathlib
+
+from .SpatialDB import SpatialDB
+from ._spatialdb import SimpleDB as CxxSimpleDB
 
 
-class SimpleDB(SpatialDBObj, ModuleSimpleDB):
+def validateFilename(value):
+    """Validate filename.
+    """
+    if 0 == len(value):
+        raise ValueError("Name of SimpleDB file must be specified.")
+    if not pathlib.Path(value).is_file():
+        raise IOError(f"SimpleDB file '{value}' not found.")
+    return value
+
+
+class SimpleDBMeta(type(SpatialDB), type(CxxSimpleDB)):
+    pass
+
+
+class SimpleDB(SpatialDB, CxxSimpleDB, metaclass=SimpleDBMeta):
     """
     Simple spatial database for points with arbitrary layout.
     Use SimpleGridDB for points on a logically rectangular grid aligned with the coordinate axes.
@@ -21,22 +37,23 @@ class SimpleDB(SpatialDBObj, ModuleSimpleDB):
     """
     DOC_CONFIG = {
         "cfg": """
+            db = spatialdata.spatialdb.SimpleDB
+
             [db]
             description = Material properties
+            filename = mat_elastic.spatialdb
             query_type = linear
-            iohandler.filename = mat_elastic.spatialdb
             """,
     }
 
     import pythia.pyre.inventory
 
+    filename = pythia.pyre.inventory.str("filename", default="", validator=validateFilename)
+    filename.meta['tip'] = "Name for SimpleGridDB file."
+
     queryType = pythia.pyre.inventory.str("query_type", default="nearest")
     queryType.validator = pythia.pyre.inventory.choice(["nearest", "linear"])
     queryType.meta['tip'] = "Type of query to perform."
-
-    from .SimpleIOAscii import SimpleIOAscii
-    iohandler = pythia.pyre.inventory.facility("iohandler", family="simpledb_io", factory=SimpleIOAscii)
-    iohandler.meta['tip'] = "I/O handler for database."
 
     # PUBLIC METHODS /////////////////////////////////////////////////////
 
@@ -44,31 +61,25 @@ class SimpleDB(SpatialDBObj, ModuleSimpleDB):
         """
         Constructor.
         """
-        SpatialDBObj.__init__(self, name)
+        SpatialDB.__init__(self, name)
+        CxxSimpleDB.__init__(self, "SimpleDB :UNKNOWN:")
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
     def _configure(self):
+        """Set members based on inventory.
         """
-        Set members based on inventory.
-        """
-        SpatialDBObj._configure(self)
-        ModuleSimpleDB.setIOHandler(self, self.iohandler)
-        ModuleSimpleDB.setQueryType(self, self._parseQueryString(self.queryType))
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleSimpleDB.__init__(self)
+        SpatialDB._configure(self)
+        CxxSimpleDB.setFilename(self, self.filename)
+        CxxSimpleDB.setQueryType(self, self._parseQueryString(self.queryType))
 
     def _parseQueryString(self, label):
         if label.lower() == "nearest":
-            value = ModuleSimpleDB.NEAREST
+            value = CxxSimpleDB.NEAREST
         elif label.lower() == "linear":
-            value = ModuleSimpleDB.LINEAR
+            value = CxxSimpleDB.LINEAR
         else:
-            raise ValueError("Unknown value for query type '%s'." % label)
+            raise NotImplementedError(f"Unknown query type '{label}'.")
         return value
 
 

@@ -9,11 +9,13 @@
 # =================================================================================================
 
 
-from .SpatialDBObj import SpatialDBObj
-from .spatialdb import UniformDB as ModuleUniformDB
+from .SpatialDB import SpatialDB
+from ._spatialdb import UniformDB as CxxUniformDB
 
+class UniformDBMeta(type(SpatialDB), type(CxxUniformDB)):
+    pass
 
-class UniformDB(SpatialDBObj, ModuleUniformDB):
+class UniformDB(SpatialDB, CxxUniformDB, metaclass=UniformDBMeta):
     """
     Spatial database with uniform values.
 
@@ -21,6 +23,8 @@ class UniformDB(SpatialDBObj, ModuleUniformDB):
     """
     DOC_CONFIG = {
         "cfg": """
+            db = spatialdata.spatialdb.UniformDB
+
             [db]
             description = Uniform material properties
             values = [density, vp, vs]
@@ -42,7 +46,9 @@ class UniformDB(SpatialDBObj, ModuleUniformDB):
         """
         Constructor.
         """
-        SpatialDBObj.__init__(self, name)
+        SpatialDB.__init__(self, name)
+        CxxUniformDB.__init__(self, "UniformDB :UNKNOWN:")
+
         from pythia.pyre.units import parser
         self.parser = parser()
 
@@ -52,7 +58,7 @@ class UniformDB(SpatialDBObj, ModuleUniformDB):
         """
         Set members based on inventory.
         """
-        SpatialDBObj._configure(self)
+        SpatialDB._configure(self)
         self._validateParameters(self.inventory)
         data = []
         units = []
@@ -71,14 +77,7 @@ class UniformDB(SpatialDBObj, ModuleUniformDB):
         values = []
         for v in self.values:
             values.append(v.strip())
-        ModuleUniformDB.setData(self, values, units, data)
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        ModuleUniformDB.__init__(self)
-        return
+        CxxUniformDB.setData(self, values, units, data)
 
     def _validateParameters(self, params):
         """

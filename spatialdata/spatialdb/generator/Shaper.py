@@ -68,21 +68,16 @@ class Shaper(Component):
         if self.dbValue == "":
             raise ValueError("Name of value in spatial database must be set for shaper '%s'." % self.name)
         self.db.open()
+        values, err = self.db.query(locs, cs, [self.dbValue])
+        values = numpy.reshape(values, -1)
 
-        nlocs = locs.shape[0]
-        self.db.setQueryValues([self.dbValue])
-        v = numpy.zeros((1,), dtype=numpy.float64)
-        vals = numpy.zeros((nlocs, 1), dtype=numpy.float64)
-        err = numpy.ones((nlocs,), dtype=numpy.int32)
-        self.db.multiquery(vals, err, locs, cs)
-        vals = numpy.reshape(numpy.array(vals), -1)
-        default = self.defaultValue * numpy.ones(vals.shape, dtype=numpy.float64)
-        mask = numpy.zeros(vals.shape, dtype=numpy.float64)
+        default = self.defaultValue * numpy.ones(values.shape, dtype=numpy.float64)
+        mask = numpy.zeros(values.shape, dtype=numpy.float64)
         mask[err[:] != 0] = 1.0
-        vals[:] += default[:] * mask[:]
+        values[:] += default[:] * mask[:]
 
         self.db.close()
-        self.values = vals
+        self.values = values
 
     def finalize(self):
         """

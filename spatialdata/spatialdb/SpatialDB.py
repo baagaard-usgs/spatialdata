@@ -10,7 +10,7 @@
 
 
 from pythia.pyre.components.Component import Component
-from .spatialdb import SpatialDB as ModuleSpatialDB
+from ._spatialdb import SpatialDB as CxxSpatialDB
 
 
 def validateDescription(value):
@@ -22,7 +22,10 @@ def validateDescription(value):
     return value
 
 
-class SpatialDBObj(Component, ModuleSpatialDB):
+class SpatialDBMeta(type(Component), type(CxxSpatialDB)):
+    pass
+
+class SpatialDB(Component, CxxSpatialDB, metaclass=SpatialDBMeta):
     """
     Python abstract base class for spatial database.
     """
@@ -39,7 +42,7 @@ class SpatialDBObj(Component, ModuleSpatialDB):
         Constructor.
         """
         Component.__init__(self, name, facility="spatial_database")
-        return
+        CxxSpatialDB.__init__(self, "SpatialDB :UNKNOWN:")
 
     # PRIVATE METHODS ////////////////////////////////////////////////////
 
@@ -48,15 +51,7 @@ class SpatialDBObj(Component, ModuleSpatialDB):
         Set attributes based on inventory.
         """
         Component._configure(self)
-        self._createModuleObj()
-        ModuleSpatialDB.setDescription(self, self.description)
-        return
-
-    def _createModuleObj(self):
-        """
-        Create Python module object.
-        """
-        raise NotImplementedError("_createModuleObj() not implemented.")
+        CxxSpatialDB.setDescription(self, self.description)
 
 
 # End of file
