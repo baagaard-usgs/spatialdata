@@ -10,22 +10,21 @@
 
 # Include files in templates in spatialdata source distribution.
 EXTRA_DIST = \
-	Makefile.am \
-	README \
-	spatialdb/README \
-	spatialdb/configure.ac \
+	README.md \
 	spatialdb/Makefile.am \
+	spatialdb/m4/cit_python.m4 \
+	spatialdb/m4/cit_numpy.m4 \
+	spatialdb/m4/cit_pybind11.m4 \
+	spatialdb/README.md \
+	spatialdb/configure.ac \
 	spatialdb/UniformVelModel.hh \
 	spatialdb/UniformVelModel.cc \
-	spatialdb/UniformVelModel.i \
-	spatialdb/spatialdbcontrib.i \
+	spatialdb/UniformVelModel_wrap.cc \
+	spatialdb/spatialdbcontrib.cc \
 	spatialdb/__init__.py \
 	spatialdb/UniformVelModel.py \
 	spatialdb/tests/Makefile.am \
-	spatialdb/tests/testcontrib.py \
-	spatialdb/tests/TestUniformVelModel.py \
-	spatialdb/m4/ac_pkg_swig.m4 \
-	spatialdb/m4/cit_numpy.m4 \
-	spatialdb/m4/cit_python.m4
+	spatialdb/tests/test_contrib.py \
+	spatialdb/tests/TestUniformVelModel.py
 
 # End of file 

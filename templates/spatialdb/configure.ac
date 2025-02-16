@@ -11,7 +11,7 @@
 # =================================================================================================
 
 AC_PREREQ(2.59)
-AC_INIT([spatialdbcontrib], [0.0.1], [cig-short@geodynamics.org])
+AC_INIT([spatialdbcontrib], [0.1.0], [baagaard@usgs.gov])
 AC_CONFIG_HEADER([portinfo])
 AC_CONFIG_AUX_DIR([./aux-config])
 AC_CONFIG_MACRO_DIR([./m4])
@@ -22,25 +22,37 @@ AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CXX
 AC_PROG_CC
 AC_DISABLE_STATIC
+AM_PROG_CC_C_O
 
 AC_PROG_LIBTOOL
-if test "$allow_undefined_flag" = unsupported; then
-    # See issue119.
-    AM_LDFLAGS="-no-undefined $AM_LDFLAGS"
-fi
-AM_CONDITIONAL([NO_UNDEFINED], [test "$allow_undefined_flag" = unsupported])
-AC_SUBST(AM_LDFLAGS)
-
 AC_PROG_INSTALL
 
-# PYTHON
-AM_PATH_PYTHON([2.3])
-CIT_PYTHON_SYSCONFIG
+dnl Require C++-14
+AX_CXX_COMPILE_STDCXX(14)
 
-# SWIG
+dnl ----------------------------------------------------------------------
+dnl PROJ
+CIT_PROJ6_HEADER
+CIT_PROJ6_LIB
+
+dnl Check for Python modules and packages.
+AM_PATH_PYTHON([3.8])
+AC_ARG_VAR(PYTHON, [Python interpreter])
+AC_ARG_VAR(PYTHONPATH, [Python module search path])
+CIT_PYTHON_SYSCONFIG
+CIT_CHECK_PYTHON_HEADER
+CIT_CHECK_PYTHON_SHARED
+
+dnl PYTHIA/PYRE
+CIT_PYTHON_MODULE([pythia],[1.1.0])
+
+dnl NUMPY
 CIT_NUMPY_PYTHON_MODULE
-CIT_NUMPY_INCDIR
-AC_PROG_SWIG(1.3.33)
+CIT_PYTHON_MODULE([numpy], [1.20.0])
+
+dnl pybind11
+CIT_PYTHON_MODULE([pybind11],[2.0.0])
+CIT_PYBIND11_INCLUDES
 
 # SPATIALDATA
 AC_LANG(C++)
@@ -52,19 +64,11 @@ AC_REQUIRE_CPP
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM([[#include <spatialdata/spatialdb/SpatialDB.hh>]
                     [#include <spatialdata/spatialdb/SimpleDB.hh>]],
-                   [[spatialdata::spatialdb::SimpleDB db;]])],
+                   [[spatialdata::spatialdb::SimpleDB db("SimpleDB");]])],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
    AC_MSG_ERROR([Spatialdata library not found; try LDFLAGS="-L<Spatialdata lib dir>"])
 ])
-if test "x$SPATIALDATA_SWIG_DIR" != "x" ; then
-  AC_CHECK_FILE([$SPATIALDATA_SWIG_DIR/spatialdb/SpatialDBObj.i], [], [
-    AC_MSG_ERROR([Spatialdata SpatialDBObj.i SWIG interface file not found])])
-  AC_SUBST([SWIG_FLAGS], ["-I$SPATIALDATA_SWIG_DIR $SWIG_FLAGS"])
-else
-  AC_CHECK_FILE([spatialdata/SpatialDBObj.i], [], [
-    AC_MSG_ERROR([Spatialdata SpatialDBObj.i SWIG interface file not found; Try setting SPATIALDATA_SWIG_DIR=<directory containing spatialdb/SpatialDBObj.i>])])
-fi
 
 
 # ENDIANNESS

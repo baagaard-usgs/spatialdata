@@ -10,12 +10,9 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-## @file __init__.py
-##
-## @brief Python module initialization
-
-__all__ = ['UniformVelModel',
-           ]
+__all__ = [
+    'UniformVelModel',
+    ]
 
 
 # End of file

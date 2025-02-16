@@ -8,10 +8,12 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-TESTS = testcontrib.py
-dist_check_SCRIPTS = testcontrib.py
+check-local: check-TESTS
+	for f in $(TEST_LOGS); do printf "\n=== $$f ===\n\n"; cat $$f; done
 
-TESTS_ENVIRONMENT = $(PYTHON)
+
+TESTS = test_contrib.py
+dist_check_SCRIPTS = test_contrib.py
 
 noinst_PYTHON = \
 	TestUniformVelModel.py 

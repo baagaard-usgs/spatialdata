@@ -21,16 +21,16 @@ namespace contrib {
 
 class contrib::spatialdb::UniformVelModel :
     public spatialdata::spatialdb::SpatialDB // inheritance from SpatialDB
-{ // UniformVelModel
-  // Allow the unit testing TestUniformVelModel object access to
-  // private class methods and members.
+{
+    // Allow the unit testing TestUniformVelModel object access to
+    // private class methods and members.
     friend class TestUniformVelModel;
 
     // PUBLIC METHODS ///////////////////////////////////////////////////////
 public:
 
     /// Constructor
-    UniformVelModel(void);
+    UniformVelModel(const char* description);
 
     /// Destructor
     ~UniformVelModel(void);
@@ -38,46 +38,46 @@ public:
     // PUBLIC METHODS ///////////////////////////////////////////////////////
 public:
 
-    // Functions required to satisfy the SpatialDB interface.
+    // Methods required to satisfy the SpatialDB interface.
 
     /// Open the database and prepare for querying.
-    void open(void);
+    void open(void) override;
 
     /// Close the database.
-    void close(void);
+    void close(void) override;
 
-    /** Set values to be returned by queries. Queries may not want all
-     * of the values available.
+    /** Get names of values in spatial database.
      *
-     * @pre Must call open() before queryVals()
+     * @returns Array of names of values.
+     */
+    const std::vector<std::string>& getNamesDBValues(void) const override;
+
+    /** Set values to be returned by queries.
+     *
+     * @pre Must call open() before setQueryValues()
      *
      * @param names Names of values to be returned in queries
-     * @param numVals Number of values to be returned in queries
      */
-    void queryVals(const char* const* names,
-                   const int numVals);
+    void setQueryValues(const std::vector<std::string>& names) override;
 
     /** Query the database.
      *
-     * @note pVals should be preallocated to accommodate numVals values.
+     * @note values should be preallocated to accommodate numValues values.
      *
-     * @pre Must call open() before query()
+     * @pre Must call open() before query().
      *
-     * @param vals Array for computed values (output from query), must be
+     * @param values Array for computed values (output from query), must be
      *   allocated BEFORE calling query().
-     * @param numVals Number of values expected (size of pVals array)
-     * @param coords Coordinates of point for query
-     * @param numDims Number of dimensions for coordinates
-     * @param csQuery Coordinate system of coordinates
+     * @param numValues Number of values expected (size of pVals array)
+     * @param coordinates Coordinates of point for query [numDims].
+     * @param csCoordinates Coordinate system of coordinates.
      *
-     * @returns 0 on success, 1 on failure (e.g., query location outside
-     * region associated with the velocity model).
+     * @returns 0 on success, 1 on failure (i.e., could not interpolate)
      */
-    int query(double* vals,
-              const int numVals,
-              const double* coords,
-              const int numDims,
-              const spatialdata::geocoords::CoordSys* csQuery);
+    int query(double* values,
+              const size_t numValues,
+              const double* coordinates,
+              const spatialdata::geocoords::CoordSys* csCoordinates) override;
 
     // PUBLIC METHODS ///////////////////////////////////////////////////////
 public:
@@ -88,30 +88,19 @@ public:
      *
      * @param value P wave speed in m/s.
      */
-    void vp(const double value);
+    void setVp(const double value);
 
     /** Set the S wave speed.
      *
      * @param value S wave speed in m/s.
      */
-    void vs(const double value);
+    void setVs(const double value);
 
     /** Set the density.
      *
      * @param value Density in kg/m**3.
      */
-    void density(const double value);
-
-    // PRIVATE ENUMS ////////////////////////////////////////////////////////
-private:
-
-    // Indices of values in database (used in queryVals to indicate
-    // which values to return in a query).
-    enum QueryValsEnum {
-        QUERY_VP=0, // vp
-        QUERY_VS=1, // vs
-        QUERY_DENSITY=2, // density
-    }; // ValsEnum
+    void setDensity(const double value);
 
     // PRIVATE MEMBERS //////////////////////////////////////////////////////
 private:
@@ -127,15 +116,16 @@ private:
     /// Coordinate system for velocity model. When querying the velocity
     /// model for physical properties, the coordinates of the query are
     /// transformed into this coordinate system.
-    spatialdata::geocoords::CSGeoProj* _cs;
+    std::shared_ptr<spatialdata::geocoords::CSGeo> _cs; ///< Coordinate system
     double _xyz[3]; ///< Array used in conversion of coordinates.
 
-    int* _queryVals; ///< Indices of values to be returned in queries.
-    int _querySize; ///< Number of values requested to be returned in queries.
+    std::vector<std::string> _names; ///< Names of values in database
+    std::vector<size_t> _queryIndices; ///< Indices of values to be returned in queries.
 
     // NOT IMPLEMENTED //////////////////////////////////////////////////////
 private:
 
+    UniformVelModel(void); ///< Not implemented
     UniformVelModel(const UniformVelModel&); ///< Not implemented
     const UniformVelModel& operator=(const UniformVelModel&); ///< Not implemented
 

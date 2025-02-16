@@ -10,26 +10,17 @@
 # See https://mit-license.org/ and LICENSE.md and for license information. 
 # =================================================================================================
 
-import unittest
+from spatialdata.testing.UnitTestApp import UnitTestApp
 
+import TestUniformVelModel
 
-def suite():
-
-    suite = unittest.TestSuite()
-
-    from TestUniformVelModel import TestUniformVelModel
-    suite.addTest(unittest.makeSuite(TestUniformVelModel))
-
-    return suite
-
-
-def main():
-    unittest.TextTestRunner(verbosity=2).run(suite())
-    return
-
+TEST_MODULES = [
+    TestUniformVelModel,
+]
 
 if __name__ == '__main__':
-    main()
+    app = UnitTestApp(test_modules=TEST_MODULES, src_dirs=["spatialdata.spatialdb.contrib"])
+    app.run()
 
 
 # End of file

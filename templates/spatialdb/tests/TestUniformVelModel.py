@@ -25,20 +25,16 @@ class TestUniformVelModel(unittest.TestCase):
 
     from spatialdata.geocoords.CSGeo import CSGeo
     csQ = CSGeo()
-    csQ.inventory.datumHoriz = "NAD27"
-    csQ.inventory.datumVert = "mean sea level"
-    csQ.inventory.ellipsoid = "clrk66"
+    csQ.inventory.string = "EPSG:4267"
     csQ._configure()
-    csQ.initialize()
     self._csQ = csQ
-    return
 
 
   def test_queryVp(self):
     locs = numpy.array( [[-118.520000,  34.120000,  -1400.00],
                          [-116.400000,  32.340000,  -1000.00]],
                         numpy.float64)
-    queryVals = ["vp"]
+    queryValues = ["vp"]
     dataE = numpy.array([[4.5e+3],
                          [4.5e+3]],
                         numpy.float64)
@@ -46,13 +42,7 @@ class TestUniformVelModel(unittest.TestCase):
     
     db = self._db
     db.open()
-    db.queryVals(queryVals)
-    data = numpy.zeros(dataE.shape, dtype=numpy.float64)
-    err = []
-    nlocs = locs.shape[0]
-    for i in range(nlocs):
-      e = db.query(data[i,:], locs[i,:], self._csQ)
-      err.append(e)
+    data, err = db.query(locs, self._csQ, queryValues)
     db.close()    
 
     self.assertEqual(len(errE), len(err))
@@ -64,14 +54,13 @@ class TestUniformVelModel(unittest.TestCase):
       self.assertEqual(dE, d)
     for vE, v in zip(numpy.reshape(dataE, -1), numpy.reshape(data, -1)):
       self.assertAlmostEqual(vE, v, 6)
-    return
 
 
   def test_query(self):
     locs = numpy.array( [[-118.520000,  34.120000,  -1400.00],
                          [-116.400000,  32.340000,  -1000.00]],
                         numpy.float64)
-    queryVals = ["density", "vs"]
+    queryValues = ["density", "vs"]
     dataE = numpy.array([[2.5e+3, 2.6e+3],
                          [2.5e+3, 2.6e+3]],
                         numpy.float64)
@@ -79,13 +68,7 @@ class TestUniformVelModel(unittest.TestCase):
     
     db = self._db
     db.open()
-    db.queryVals(queryVals)
-    data = numpy.zeros(dataE.shape, dtype=numpy.float64)
-    err = []
-    nlocs = locs.shape[0]
-    for i in range(nlocs):
-      e = db.query(data[i,:], locs[i,:], self._csQ)
-      err.append(e)
+    data, err = db.query(locs, self._csQ, queryValues)
     db.close()    
 
     self.assertEqual(len(errE), len(err))
@@ -97,7 +80,6 @@ class TestUniformVelModel(unittest.TestCase):
       self.assertEqual(dE, d)
     for vE, v in zip(numpy.reshape(dataE, -1), numpy.reshape(data, -1)):
       self.assertAlmostEqual(vE, v, 6)
-    return
 
 
 # End of file 
