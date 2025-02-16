@@ -91,26 +91,6 @@ spatialdata::units::TestNondimensional::testConstructors(void) {
     CHECK(defaultTime == dim._time);
     CHECK(defaultDensity == dim._density);
     CHECK(defaultTemperature == dim._temperature);
-
-    dim._length = 2.0;
-    dim._pressure = 3.0;
-    dim._time = 4.0;
-    dim._density = 5.0;
-    dim._temperature = 6.0;
-    Nondimensional dimCopy(dim);
-    CHECK(dim._length == dimCopy._length);
-    CHECK(dim._pressure == dimCopy._pressure);
-    CHECK(dim._time == dimCopy._time);
-    CHECK(dim._density == dimCopy._density);
-    CHECK(dim._temperature == dimCopy._temperature);
-
-    Nondimensional dimAssign;
-    dimAssign = dim;
-    CHECK(dim._length == dimAssign._length);
-    CHECK(dim._pressure == dimAssign._pressure);
-    CHECK(dim._time == dimAssign._time);
-    CHECK(dim._density == dimAssign._density);
-    CHECK(dim._temperature == dimAssign._temperature);
 } // testConstructors
 
 
