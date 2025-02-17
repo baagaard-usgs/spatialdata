@@ -1,7 +1,7 @@
 # File Formats
 
 :::{toctree}
-simple-ascii.md
+simple.md
 simple-grid.md
 time-history.md
 :::

@@ -28,9 +28,6 @@
 [`CompositeDB`](spatialdb/CompositeDB.md)
 : Spatial database comprised of two spatial databases.
 
-[`UserFunctionDB`](spatialdb/UserFunctionDB.md)
-: Spatial database with values specified by a C/C++ function (used in MMS tests).
-
 [`GravityField`](spatialdb/GravityField.md)
 : Special spatial database implementation for a gravity field.
 

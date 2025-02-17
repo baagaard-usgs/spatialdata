@@ -22,6 +22,8 @@ Implements `CoordSys`.
 Example of setting `CSCart` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+coordsys = spatialdata.geocoodes.CSCart
+
 [coordsys]
 units = meter
 space_dim = 3

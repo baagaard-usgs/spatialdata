@@ -40,7 +40,6 @@ SimpleGridDB {
   num-x = 6
   num-y = 4
   num-z = 1
-  space-dim = 3
   num-values = 3
   value-names =  displacement_x  displacement_y  displacement_z
   value-units =  m  m  m
@@ -89,7 +88,7 @@ SimpleGridDB {
 ```{code-block} python
 import numpy
 
-from spatialdata.spatialdb.SimpleGridAscii import createWriter
+from spatialdata.spatialdb import SimpleGridDBIO
 from spatialdata.geocoords.CSGeo import CSGeo
 
 # Create the UTM zone 10n (WGS84 datum) coordinate system.
@@ -119,8 +118,7 @@ data = {
     "z": z1,
     "coordsys": cs,
     "data_dim": 2,
-    "values": [
-        {
+    "values": [{
         "name": "displacement_x",
         "units": "m",
         "data": displacement[:,0],
@@ -132,13 +130,11 @@ data = {
         "name": "displacement_z",
         "units": "m",
         "data": displacement[:,2],
-        },
-    ]
+        }]
 }
 
-# Create the writer object and write the data file.
-writer = createWriter("displacement.spatialdb")
-writer.write(data)
+# Write the data file.
+SimpleGridDBIO.write(data, "displacement.spatialdb")
 ```
 
 :::

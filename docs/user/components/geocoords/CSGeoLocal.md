@@ -31,6 +31,8 @@ Implements `CSGeo`.
 Example of setting `CSGeoLocal` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+coordsys = spatialdata.geocoords.CSGeoLocal
+
 [coordsys]
 # Local, rotated UTM Zone 10 coordinate system
 crs_string = EPSG:29610

@@ -22,6 +22,8 @@ Implements `CoordSys`.
 Example of setting `CSGeo` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+coordsys = spatialdata.geocoors.CSGeo
+
 [coordsys]
 # WGS84 (latitude, longitude) coordinate system
 crs_string = EPSG:4326

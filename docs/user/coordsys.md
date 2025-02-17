@@ -1,7 +1,7 @@
 # Coordinate Systems
 
-SpatialData provides two types of coordinate systems: Cartesian (`CSCart`) and georeferenced (`CSGeo`).
-The coordinate systems can be specified 
+SpatialData provides two main types of coordinate systems: Cartesian (`CSCart`) and georeferenced (`CSGeo`).
+It also includes a specialized version of the georeference coordinate system (`CSGeoLocal`) with a local origin and rotation angle.
 
 ## CSCart
 

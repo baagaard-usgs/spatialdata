@@ -16,7 +16,7 @@ In one, two, or three dimensions, queries can use a ``nearest value'' search or 
 The file format is described in {ref}`sec-file-formats-SimpleIOAscii`.
 
 :::{admonition} Pyre User Interface
-See [SimpleDB component](../components/spatialdb/SimpleDB.md) and [SimpleIOAscii component](../components/spatialdb/SimpleIOAscii.md).
+See [SimpleDB component](../components/spatialdb/SimpleDB.md).
 :::
 
 ## Examples
@@ -47,9 +47,6 @@ SimpleDB {
   // 3: points in a volume
   data-dim =    1
 
-  // Spatial dimension
-  space-dim =    2
-
   // Coordinate system for the points
   cs-data = cartesian {
     to-meters = 1
@@ -69,7 +66,7 @@ SimpleDB {
 ```{code-block} python
 import numpy
 
-from spatialdata.spatialdb.SimpleIOAscii import createWriter
+from spatialdata.spatialdb import SimpleDBIO
 from spatialdata.geocoords.CSCart import CSCart
 
 # Create a 2D Cartesian coordinate system.
@@ -81,7 +78,7 @@ cs._configure()
 # Because the variation is along the y-direction, we use x=0.0 for simplicity.
 points = numpy.array([
     [0.0, 0.0],
-    [0.0, -10.0]
+    [0.0, -10.0],
     [0.0, -40.0],
     [0.0, -100.0],
     ])
@@ -99,9 +96,8 @@ data = {
     }]
 }
 
-# Create the writer object and write the data file.
-writer = createWriter("density.spatialdb")
-writer.write(data)
+# Write the data file.
+SimpleDBIO.write(data, "density.spatialdb")
 ```
 
 :::

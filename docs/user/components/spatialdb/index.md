@@ -10,11 +10,8 @@ AnalyticDB.md
 CompositeDB.md
 GravityField.md
 SimpleDB.md
-SimpleGridAscii.md
 SimpleGridDB.md
-SimpleIOAscii.md
-SpatialDBObj.md
+SpatialDB.md
 TimeHistory.md
 UniformDB.md
-UserFunctionDB.md
 :::

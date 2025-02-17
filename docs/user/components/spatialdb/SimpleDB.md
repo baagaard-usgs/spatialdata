@@ -9,18 +9,16 @@ Use SimpleGridDB for points on a logically rectangular grid aligned with the coo
 
 Implements `SpatialDB`.
 
-## Pyre Facilities
-
-* `iohandler`: I/O handler for database.
-  - **current value**: 'simpleioascii', from {default}
-  - **configurable as**: simpleioascii, iohandler
-
 ## Pyre Properties
 
 * `description`=\<str\>: Description for database.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateDescription at 0x102e94dc0>
+  - **validator**: <function validateDescription at 0x102bb07c0>
+* `filename`=\<str\>: Name for SimpleGridDB file.
+  - **default value**: ''
+  - **current value**: '', from {default}
+  - **validator**: <function validateFilename at 0x102bb3ec0>
 * `query_type`=\<str\>: Type of query to perform.
   - **default value**: 'nearest'
   - **current value**: 'nearest', from {default}
@@ -31,9 +29,11 @@ Implements `SpatialDB`.
 Example of setting `SimpleDB` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+db = spatialdata.spatialdb.SimpleDB
+
 [db]
 description = Material properties
+filename = mat_elastic.spatialdb
 query_type = linear
-iohandler.filename = mat_elastic.spatialdb
 :::
 

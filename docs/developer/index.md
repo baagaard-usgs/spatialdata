@@ -3,10 +3,9 @@
 :::{admonition} Under construction.
 :class: warning
 
-Placeholder for developer guide.
+This section is still a work in progress.
 :::
 
-%:::{toctree}
-%contributing.md
-%testing.md
-%:::
+```{toctree}
+extending/index.md
+```

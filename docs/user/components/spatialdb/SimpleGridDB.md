@@ -14,11 +14,11 @@ Implements `SpatialDB`.
 * `description`=\<str\>: Description for database.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateDescription at 0x102e94dc0>
+  - **validator**: <function validateDescription at 0x102bb07c0>
 * `filename`=\<str\>: Name for data file.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateFilename at 0x103178ca0>
+  - **validator**: <function validateFilename at 0x102bb2700>
 * `query_type`=\<str\>: Type of query to perform.
   - **default value**: 'nearest'
   - **current value**: 'nearest', from {default}
@@ -29,6 +29,8 @@ Implements `SpatialDB`.
 Example of setting `SimpleGridDB` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+db = spatialdata.spatialdb.SimpleGridDB
+
 [db]
 description = Material properties
 filename = mat_elastic.spatialdb

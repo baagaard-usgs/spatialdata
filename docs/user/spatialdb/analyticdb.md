@@ -25,20 +25,19 @@ We create an `AnalyticDB` specifying a displacement field composed of polynomial
 caption: Creating an `AnalyticDB` using C++. 
 ---
 // Data to populate AnalyticDB.
-const size_t numValues = 2;
-const char* names[numValues] = { "displacement_x", "displacement_y" };
-const char* units[numValues] = { "cm", "cm" };
-const double expressions[numValues] = {
+const std::vector<std::string> names({ "displacement_x", "displacement_y" });
+const std::vector<std::string> units({ "cm", "cm" });
+const std::vector<std::string> expressions({
      "2.0 * x^2 - 1.5 * y + 5.0", 
      "7.5 * y^2 + 4.8 * x + 2.0 * y + 1.5",
-      };
+      });
 spatialdata::geocoords::CSCart cs;
 cs.setSpaceDim(2);
 
 // Create AnalyticDB 'db; and set the values.
-spatialdata::spatialdb::AnalyticDB db;
+spatialdata::spatialdb::AnalyticDB db("C++ example");
 db.setCoordSys(cs)
-db.setData(names, units, expressions, numValues);
+db.setData(names, units, expressions);
 ```
 
 :::
@@ -53,6 +52,7 @@ caption: Creating a `AnalyticDB` using Python.
 ---
 from spatialdata.spatialdb.AnalyticDB import AnalyticDB
 db = AnalyticDB()
+db.description = "Python example"
 db.label = "Analytic spatial database for displacement field"
 db.values = ["displacement_x", "displacement_y"]
 db.units = ["cm", "cm"]

@@ -1,7 +1,7 @@
-# SpatialDBObj
+# SpatialDB
 
 % WARNING: Do not edit; this is a generated file!
-:Full name: `spatialdata.spatialdb.SpatialDBObj`
+:Full name: `spatialdata.spatialdb.SpatialDB`
 :Journal name: `spatialdb`
 
 Python abstract base class for spatial database.
@@ -11,5 +11,5 @@ Python abstract base class for spatial database.
 * `description`=\<str\>: Description for database.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateDescription at 0x102e94dc0>
+  - **validator**: <function validateDescription at 0x102bb07c0>
 

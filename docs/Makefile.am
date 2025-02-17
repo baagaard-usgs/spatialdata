@@ -29,16 +29,15 @@ dist_noinst_DATA = \
 	intro/images/difficult.png \
 	intro/images/expert.png \
 	user/index.md \
+	user/file-formats/simple.md \
 	user/file-formats/simple-grid.md \
 	user/file-formats/index.md \
 	user/file-formats/time-history.md \
-	user/file-formats/simple-ascii.md \
 	user/timedb/index.md \
 	user/components/update_components.sh \
 	user/components/index.md \
 	user/components/implementations.md \
 	user/components/utils/PointsStream.md \
-	user/components/utils/UnitTestApp.md \
 	user/components/utils/index.md \
 	user/components/geocoords/CSGeo.md \
 	user/components/geocoords/index.md \
@@ -48,22 +47,20 @@ dist_noinst_DATA = \
 	user/components/units/index.md \
 	user/components/units/NondimElasticDynamic.md \
 	user/components/units/Nondimensional.md \
+	user/components/spatialdb/AnalyticDB.md \
+	user/components/spatialdb/SimpleDB.md \
 	user/components/spatialdb/SimpleGridDB.md \
 	user/components/spatialdb/CompositeDB.md \
-	user/components/spatialdb/SimpleDB.md \
-	user/components/spatialdb/UserFunctionDB.md \
 	user/components/spatialdb/generator/Geometry.md \
 	user/components/spatialdb/generator/Value.md \
 	user/components/spatialdb/generator/GenSimpleDBApp.md \
 	user/components/spatialdb/generator/index.md \
 	user/components/spatialdb/generator/Shaper.md \
-	user/components/spatialdb/SimpleGridAscii.md \
 	user/components/spatialdb/GravityField.md \
 	user/components/spatialdb/index.md \
 	user/components/spatialdb/TimeHistory.md \
-	user/components/spatialdb/SpatialDBObj.md \
+	user/components/spatialdb/SpatialDB.md \
 	user/components/spatialdb/UniformDB.md \
-	user/components/spatialdb/SimpleIOAscii.md \
 	user/nondimensionalization.md \
 	user/spatialdb/simplegriddb.md \
 	user/spatialdb/overview.md \
@@ -72,7 +69,9 @@ dist_noinst_DATA = \
 	user/spatialdb/index.md \
 	user/spatialdb/gravity-field.md \
 	user/spatialdb/uniformdb.md \
-	user/coordsys.md	
+	user/coordsys.md \
+	developer/index.md \
+	developer/extending/index.md
 
 
 # End of file 

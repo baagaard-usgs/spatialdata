@@ -8,7 +8,7 @@ Currently, only a single scalar amplitude can be specified.
 Linear interpolation is used to determine the amplitude for times in between points in the database.
 This means that the time history database must span the range of time values of interest.
 The points in the time history must also be ordered in time.
-If a query request the amplitude at a time beyond the last point in the database, then the amplitude for the last point will be used.
+If a query requests the amplitude at a time beyond the last point in the database, then the amplitude for the last point will be used.
 
 The file format is described in {ref}`sec-file-formats-TimeHistoryDB`.
 
@@ -59,8 +59,8 @@ import numpy
 times = numpy.arange(0.0, 10.1, 1.0)
 amplitude = numpy.exp(-2.0*times, dtype=numpy.float64)
 
-from spatialdata.spatialdb.TimeHistoryIO import write
-write(times, amplitude, "year", "amplitude.timedb")
+from spatialdata.spatialdb import TimeHistoryIO
+TimeHistoryIO.write(times, amplitude, "year", "amplitude.timedb")
 ```
 
 :::

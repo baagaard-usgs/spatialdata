@@ -1,7 +1,4 @@
 # Development Plan
 
-## Version 3.x.xdev
-
-List of new features currently available in the `main` branch.
-
-No new features.
+Development of SpatialData is primarily driven by PyLith development.
+Consequently, the [PyLith Development plan](https://pylith.readthedocs.io/en/latest/intro/development-plan.html) includes some priorities for development of this library.

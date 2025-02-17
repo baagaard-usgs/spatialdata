@@ -29,7 +29,6 @@ SimpleGridDB { // start specifying the database parameters
   num-x = 3 // Number of locations along x coordinate direction
   num-y = 1 // Number of locations along y coordinate direction
   num-z = 2 // Number of locations along z coordinate direction
-  space-dim = 3 // Spatial dimension in which data resides
 
   // Specify the coordinate system associated with the 
   // coordinates of the locations where data is given
@@ -37,7 +36,6 @@ SimpleGridDB { // start specifying the database parameters
     to-meters = 1.0e+3 // Coordinates are in km
 
     // Specify the spatial dimension of the coordinate system
-    // This value must match the one associated with the database
     space-dim = 3
   } // cs-data // end of coordinate system specification
 } // end of SimpleGridDB specification

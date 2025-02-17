@@ -1,6 +1,6 @@
 # UniformDB
 
-If the values for a field a uniform (same everywhere), then a `UniformDB` or `SimpleDB` should be used.
+If the values for a field are uniform (same everywhere), then a `UniformDB` or `SimpleDB` should be used.
 The main difference between the two is that a `UniformDB` is specified programmatically, whereas a `SimpleDB` is specified using a data file.
 If the values are used in multiple places, then it is usually easier to create a `SimpleDB` data file and reuse it rather than creating a `UniformDB` programmatically each time.
 
@@ -25,14 +25,13 @@ We create a `UniformDB` specifying a density of 2500 kg/m$^3$ and a shear modulu
 caption: Creating a `UniformDB` using C++. 
 ---
 // Data to populate UniformDB.
-const size_t numValues = 2;
-const char* names[numValues] = { "density", "shear_modulus" };
-const char* units[numValues] = { "kg/m**3", "GPa" };
-const double values[numValues] = { 2500.0, 30.0 };
+const std::vector<std::string> names({ "density", "shear_modulus" });
+const std::vector<std::string> units({ "kg/m**3", "GPa" });
+const std::vector<double> values({ 2500.0, 30.0 });
 
-// Create UniformDB 'db; and set the values.
-spatialdata::spatialdb::UniformDB db;
-db.setData(names, units, values, numValues);
+// Create UniformDB 'db' and set the values.
+spatialdata::spatialdb::UniformDB db("C++ example");
+db.setData(names, units, values);
 ```
 
 :::
@@ -47,6 +46,7 @@ caption: Creating a `UniformDB` using Python.
 ---
 from spatialdata.spatialdb.UniformDB import UniformDB
 db = UniformDB()
+db.description = "Python example"
 db.values = ["density", "shear_modulus"]
 db.data = ["2500*kg/m**3", "30.0*GPa"]
 db._configure()

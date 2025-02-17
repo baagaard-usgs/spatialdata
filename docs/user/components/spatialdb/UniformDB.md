@@ -16,7 +16,7 @@ Implements `SpatialDB`.
 * `description`=\<str\>: Description for database.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateDescription at 0x102e94dc0>
+  - **validator**: <function validateDescription at 0x102bb07c0>
 * `values`=\<list\>: Names of values in spatial database.
   - **default value**: []
   - **current value**: [], from {default}
@@ -26,6 +26,8 @@ Implements `SpatialDB`.
 Example of setting `UniformDB` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+db = spatialdata.spatialdb.UniformDB
+
 [db]
 description = Uniform material properties
 values = [density, vp, vs]

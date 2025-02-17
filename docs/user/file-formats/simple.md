@@ -29,7 +29,6 @@ SimpleDB { // start specifying the database parameters
   value-units =  m  m  m
   num-locs = 3 // Number of locations where values are given
   data-dim = 1 // Locations of data points form a line
-  space-dim = 3 // Spatial dimension in which data resides
 
   // Specify the coordinate system associated with the 
   // coordinates of the locations where data is given
@@ -37,7 +36,6 @@ SimpleDB { // start specifying the database parameters
     to-meters = 1.0e+3 // Coordinates are in km
 
     // Specify the spatial dimension of the coordinate system
-    // This value must match the one associated with the database
     space-dim = 3
 
   } // cs-data // end of coordinate system specification

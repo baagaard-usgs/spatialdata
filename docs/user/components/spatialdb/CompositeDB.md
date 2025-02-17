@@ -11,42 +11,38 @@ Implements `SpatialDB`.
 
 ## Pyre Facilities
 
-* `db_A`: Spatial database A.
-  - **current value**: 'uniformdb', from {default}
-  - **configurable as**: uniformdb, db_A
-* `db_B`: Spatial database B.
-  - **current value**: 'uniformdb', from {default}
-  - **configurable as**: uniformdb, db_B
+* `dbs`: Names of values to query with database A.
+  - **current value**: 'emptybin', from {default}
+  - **configurable as**: emptybin, dbs
 
 ## Pyre Properties
 
 * `description`=\<str\>: Description for database.
   - **default value**: ''
   - **current value**: '', from {default}
-  - **validator**: <function validateDescription at 0x102e94dc0>
-* `values_A`=\<list\>: Names of values to query with database A.
-  - **default value**: []
-  - **current value**: [], from {default}
-* `values_B`=\<list\>: Names of values to query with database B.
-  - **default value**: []
-  - **current value**: [], from {default}
+  - **validator**: <function validateDescription at 0x102bb07c0>
 
 ## Example
 
 Example of setting `CompositeDB` Pyre properties and facilities in a parameter file.
 
 :::{code-block} cfg
+db = spatialdata.spatialdb.CompositeDB
+
 [db]
-values_A = [density]
-values_B = [vp, vs]
+dbs = [density, wavespeeds]
 
-db_A = spatialdata.spatialdb.UniformDB
-db_A.description = Density spatial database.
-db_A.values = [density]
-db_A.data = [3000*kg/m**3]
+[db.dbs.density]
+values = [density]
+db = spatialdata.spatialdb.UniformDB
+db.description = Density spatial database.
+db.values = [density]
+db.data = [3000*kg/m**3]
 
-db_B = spatialdata.spatialdb.SimpleDB
-db_B.description = Wave speed spatial database.
-db_B.iohandler.filename = vpvs.spatialdb
+[db.dbs.wavespeeds]
+values = [vp, vs]
+db = spatialdata.spatialdb.SimpleDB
+db.description = Wave speed spatial database.
+db.filename = vpvs.spatialdb
 :::
 
