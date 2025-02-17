@@ -62,7 +62,6 @@ dist_noinst_DATA = \
 	user/components/spatialdb/index.md \
 	user/components/spatialdb/TimeHistory.md \
 	user/components/spatialdb/SpatialDBObj.md \
-	user/components/spatialdb/SCECCVMH.md \
 	user/components/spatialdb/UniformDB.md \
 	user/components/spatialdb/SimpleIOAscii.md \
 	user/nondimensionalization.md \

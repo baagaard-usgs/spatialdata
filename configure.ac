@@ -36,12 +36,6 @@ AC_ARG_WITH([python-coverage],
 	[python_coverage="coverage2"])
 AC_SUBST(python_coverage)
 
-dnl TESTING w/SCEC CVM-H
-AC_ARG_ENABLE([scec-cvm-h],
-	[  --enable-scec-cvm-h=DIR    Enable unit testing with SCEC CVM-H (requires catch2 and SCEC CVM-H data files) [[default=no]]],
-	[],
-	[enable_scec_cvm_h=no])
-
 dnl ----------------------------------------------------------------------
 AC_PROG_CXX
 AC_PROG_CC
@@ -63,26 +57,7 @@ dnl CATCH2
 if test "$enable_testing" = "yes" ; then
   CIT_CATCH2_HEADER
   CIT_CATCH2_LIB
-
-  if test "$enable_scec_cvm_h" != "no" ; then
-    AC_SUBST([SCECCVMH_DATADIR], ["$enable_scec_cvm_h"])
-    AC_CHECK_FILE([$enable_scec_cvm_h/topo.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file topo.vo not found])])
-    AC_CHECK_FILE([$enable_scec_cvm_h/moho.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file moho.vo not found])])
-    AC_CHECK_FILE([$enable_scec_cvm_h/base.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file base.vo not found])])
-    AC_CHECK_FILE([$enable_scec_cvm_h/LA_HR.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file LA_HR.vo not found])])
-    AC_CHECK_FILE([$enable_scec_cvm_h/LA_LR.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file LA_LR.vo not found])])
-    AC_CHECK_FILE([$enable_scec_cvm_h/CM.vo], [], [
-      AC_MSG_ERROR([SCEC CVM-H data file CM.vo not found])])
-    AC_DEFINE_UNQUOTED([SCECCVMH_DATADIR], ["$enable_scec_cvm_h"],
-               [Define to test SCEC CVM-H.])
-  fi
 fi
-AM_CONDITIONAL([ENABLE_SCEC_CVM_H], [test "$enable_scec_cvm_h" != no])
 
 dnl Check for Python modules and packages.
 AM_PATH_PYTHON([3.8])

@@ -9,7 +9,6 @@ maxdepth: 1
 AnalyticDB.md
 CompositeDB.md
 GravityField.md
-SCECCVMH.md
 SimpleDB.md
 SimpleGridAscii.md
 SimpleGridDB.md

@@ -15,16 +15,10 @@ SUBDIRS = data
 TESTS = test_spatialdb.py
 dist_check_SCRIPTS = test_spatialdb.py
 
-if ENABLE_SCEC_CVM_H
-  TESTS += test_sceccvmh.py
-  dist_check_SCRIPTS += test_sceccvmh.py
-endif
-
 noinst_PYTHON = \
 	TestCompositeDB.py \
 	TestGenSimpleDBApp.py \
 	TestGravityField.py \
-	TestSCECCVMH.py \
 	TestSimpleIOAscii.py \
 	TestSimpleDB.py \
 	TestUniformDB.py \
@@ -34,18 +28,9 @@ noinst_PYTHON = \
 	TestTimeHistory.py \
 	TestTimeHistoryIO.py
 
-dist_noinst_PYTHON = \
-	TestSCECCVMH.py.in
-
 dist_noinst_DATA = \
 	gensimpledb.cfg \
 	testgen1din2d.odb
-
-do_build = sed -e s%[@]SCECCVMH_DATADIR[@]%${SCECCVMH_DATADIR}%g
-
-$(srcdir)/TestSCECCVMH.py: $(srcdir)/TestSCECCVMH.py.in Makefile
-	$(do_build) < $< > $@
-test_sceccvmh.py: $(srcdir)/TestSCECCVMH.py
 
 # 'export' the input files by performing a mock install
 export_datadir = $(top_builddir)/tests/pytests/spatialdb
@@ -57,8 +42,5 @@ clean-data:
 
 BUILT_SOURCES = export-data
 clean-local: clean-data
-
-CLEANFILES = \
-	$(srcdir)/TestSCECCVMH.py
 
 # End of file

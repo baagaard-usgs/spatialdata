@@ -24,7 +24,6 @@ EXTRA_DIST = \
 	spatialdb/AnalyticDB.py \
 	spatialdb/CompositeDB.py \
 	spatialdb/GravityField.py \
-	spatialdb/SCECCVMH.py \
 	spatialdb/SimpleDB.py \
 	spatialdb/SimpleDBData.py \
 	spatialdb/SimpleDBIO.py \

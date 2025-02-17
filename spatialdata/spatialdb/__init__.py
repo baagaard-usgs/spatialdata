@@ -13,7 +13,6 @@
 # @brief Python spatialdata spatialdb module initialization.
 
 __all__ = [
-    "SCECCVMH",
     "SimpleDB",
     "SimpleIOAscii",
     "SimpleIO",
